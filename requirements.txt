@@ -1,6 +1,6 @@
 Flask
 pymongo
-dnspython
+flask_cors
 reportlab
 gunicorn
 requests
