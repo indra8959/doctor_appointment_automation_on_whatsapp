@@ -24,7 +24,7 @@ def pay_link(name,number,email,id,rs):
         "sms": False,
         "email": False
     },
-    "callback_url": "https://3076-2409-40d1-2037-59bd-9059-ed1a-7c91-92dc.ngrok-free.app/payment_callback/"+id+"/",
+    "callback_url": "https://localprime.news/payment_callback/"+id+"/",
     "callback_method": "get"
 }
 
