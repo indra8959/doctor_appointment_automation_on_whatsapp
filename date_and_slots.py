@@ -6,9 +6,9 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from collections import Counter
 
-MONGO_URI = "mongodb+srv://indrajeet:indu0011@cluster0.qstxp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
-db = client.get_database("medicruise")
+db = client.get_database("caredb")
 doctors = db["doctors"] 
 appointment = db["appointment"] 
 templog = db["logs"] 
@@ -16,7 +16,7 @@ templog = db["logs"]
 
 def dateandtime(id):
         if id == 'date':
-            doc_id = ObjectId("67dd57c9f7318c29e5d54853")
+            doc_id = ObjectId("67ee5e1bde4cb48c515073ee")
             document = doctors.find_one({"_id": doc_id})
             datas = document
 
@@ -51,12 +51,12 @@ def dateandtime(id):
         else:
 
 
-            doc_id = ObjectId("67dd57c9f7318c29e5d54853")
+            doc_id = ObjectId("67ee5e1bde4cb48c515073ee")
             document = doctors.find_one({"_id": doc_id})
             datas = document
 
 
-            appoint = list(appointment.find({"doctor_phone_id": "12345", "date_of_appointment":id,"amount":{"$gt": -1}}, {"_id": 0}))
+            appoint = list(appointment.find({"doctor_phone_id": "67ee5e1bde4cb48c515073ee", "date_of_appointment":id,"amount":{"$gt": -1}}, {"_id": 0}))
             
             if appoint:
 

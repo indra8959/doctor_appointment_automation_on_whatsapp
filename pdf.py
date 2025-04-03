@@ -7,9 +7,9 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from pymongo import MongoClient
 
-MONGO_URI = "mongodb+srv://indrajeet:indu0011@cluster0.qstxp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
-db = client.get_database("medicruise")
+db = client.get_database("caredb")
 doctors = db["doctors"] 
 appointment = db["appointment"] 
 templog = db["logs"] 
@@ -71,10 +71,10 @@ def pdfdownload(from_number):
 # Build PDF with header and table
         pdf.build([header, table])
 
-        WHATSAPP_ACCESS_TOKEN = "EAAJdr829Xj4BO4B15MZAqnCnRp9PprXQP6AOlfw5gtYwVLdrKlSjwXta4o3wkkYalMVOZAARNRIVk7evjoiQg9cY7NfQzFqqXZCv7OQMbxgeQVkDBqnPZA1PcWWGZBN6AXNBrcqGXIINacmAwycthHMsh479FqVjkTWHPgZBrBlfXO93O0DZBOn1aB57vRZB1f0PNAZDZD"
+        WHATSAPP_ACCESS_TOKEN = "EACHqNPEWKbkBOZBGDB1NEzQyDEsZAUcJwBMdopvDDWrS9JNRsWe1YAHc6C5k4pCQlJvScAX7URYSFE4wvMXlh7x9Uf6fwbccvQqceRxHxJFJLZC7szcNaSZCr9pJWE8g5S8SZCaNxRbMZA6dQNZBVaQzBtZBQJ4TNZAoZBuyZBjyVJDOOSKmSSsdqhFRKLUS6fm28zwKA7GhNsclSZAJtjQWTBWfzw5bOS2Fp53qqujNwm9f"
         PDF_FILE_PATH = pdf_filename
 
-        PHONE_NUMBER_ID = "606444145880553"
+        PHONE_NUMBER_ID = "563776386825270"
 
 
 # API endpoint for media upload

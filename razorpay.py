@@ -1,11 +1,11 @@
 import requests
 import json
 import re
-def pay_link(name,number,email,id,rs):
+def pay_link(name,number,email,id,rs,rzid,rzk):
 
 # Razorpay API Credentials
-    RAZORPAY_KEY_ID = "rzp_test_XUeipzWKP1MJoZ"
-    RAZORPAY_KEY_SECRET = "4uIrYgZLsa96yccy9OkLrMok"
+    RAZORPAY_KEY_ID = rzid
+    RAZORPAY_KEY_SECRET = rzk
 
 # API URL
     url = "https://api.razorpay.com/v1/payment_links"
@@ -24,7 +24,7 @@ def pay_link(name,number,email,id,rs):
         "sms": False,
         "email": False
     },
-    "callback_url": "https://localprime.news/payment_callback/"+id+"/",
+    "callback_url": "https://cbab-2409-40d1-203c-334f-f82a-8a13-d70e-7396.ngrok-free.app/payment_callback/"+id+"/",
     "callback_method": "get"
 }
 

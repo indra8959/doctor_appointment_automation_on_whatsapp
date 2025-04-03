@@ -7,16 +7,20 @@ import json
 from bson.objectid import ObjectId
 from razorpay import pay_link
 
-MONGO_URI = "mongodb+srv://indrajeet:indu0011@cluster0.qstxp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
-db = client.get_database("medicruise")
+db = client.get_database("caredb")
 doctors = db["doctors"] 
 appointment = db["appointment"] 
 templog = db["logs"] 
+admin = db["admin"] 
 
-headers={'Authorization': 'Bearer EAAJdr829Xj4BO4B15MZAqnCnRp9PprXQP6AOlfw5gtYwVLdrKlSjwXta4o3wkkYalMVOZAARNRIVk7evjoiQg9cY7NfQzFqqXZCv7OQMbxgeQVkDBqnPZA1PcWWGZBN6AXNBrcqGXIINacmAwycthHMsh479FqVjkTWHPgZBrBlfXO93O0DZBOn1aB57vRZB1f0PNAZDZD','Content-Type': 'application/json'}
-phone_id = '606444145880553'
+headers={'Authorization': 'Bearer EACHqNPEWKbkBOZBGDB1NEzQyDEsZAUcJwBMdopvDDWrS9JNRsWe1YAHc6C5k4pCQlJvScAX7URYSFE4wvMXlh7x9Uf6fwbccvQqceRxHxJFJLZC7szcNaSZCr9pJWE8g5S8SZCaNxRbMZA6dQNZBVaQzBtZBQJ4TNZAoZBuyZBjyVJDOOSKmSSsdqhFRKLUS6fm28zwKA7GhNsclSZAJtjQWTBWfzw5bOS2Fp53qqujNwm9f','Content-Type': 'application/json'}
+phone_id = '563776386825270'
 
+dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
+razorpayid = dxocument.get('razorpayid')
+razorpaykey = dxocument.get('razorpaykey')
 # def checkoldappointment(phonenumber,fdate,name,doctorid):
 #     result = list(appointment.find({"whatsapp_number":phonenumber,"doctor_phone_id":doctorid,"patient_name":name,"amount":{"$gt": 0}}))
 # # print(appoint.val())
@@ -39,7 +43,7 @@ def send_payment_flow(from_number,name,date,slot,amount,link):
 
     print(from_number,name,date,slot,amount,link)
 
-    external_url = "https://graph.facebook.com/v22.0/606444145880553/messages"  # Example API URL
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     incoming_data = { 
         "messaging_product": "whatsapp", 
@@ -153,7 +157,7 @@ def custom_book_appointment(data):
     from_number = message_info.get('from')
     timestamp = message_info.get('timestamp')
 
-    doctor_id = '12345'
+    doctor_id = '67ee5e1bde4cb48c515073ee'
 
     # result = list(doctors.find({"doctor_phone_id": doctor_id}, {"_id": 0}))  # Convert cursor to list
     # data_length = len(result)
@@ -225,9 +229,13 @@ def custom_book_appointment(data):
     else:
         id = str(appointment.insert_one(dataset).inserted_id)
         print(id)
-        link = pay_link(name,from_number,'ajeetindrajeet@gmail.com',id,200)
+
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+
+        link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
         print(link)
-        amount = 200
+        amount = fee
         return send_payment_flow(from_number,name,date,slot,amount,link)
 
         
@@ -293,7 +301,7 @@ def book_appointment(data):
     from_number = message_info.get('from')
     timestamp = message_info.get('timestamp')
 
-    doctor_id = '12345'
+    doctor_id = '67ee5e1bde4cb48c515073ee'
 
     # result = list(doctors.find({"doctor_phone_id": doctor_id}, {"_id": 0}))  # Convert cursor to list
     # data_length = len(result)
@@ -365,15 +373,20 @@ def book_appointment(data):
     else:
         id = str(appointment.insert_one(dataset).inserted_id)
         print(id)
-        link = pay_link(name,from_number,'ajeetindrajeet@gmail.com',id,200)
+
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+
+
+        link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
         print(link)
-        amount = 200
+        amount = fee
         return send_payment_flow(from_number,name,date,slot,amount,link)
 
 
 def custom_appointment_flow(from_number):
 
-    external_url = "https://graph.facebook.com/v22.0/606444145880553/messages"  # Example API URL
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     incoming_data = { 
     "messaging_product": "whatsapp", 
@@ -406,14 +419,14 @@ def custom_appointment_flow(from_number):
 
 def appointment_flow(from_number):
 
-    external_url = "https://graph.facebook.com/v22.0/606444145880553/messages"  # Example API URL
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     incoming_data = { 
     "messaging_product": "whatsapp", 
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "flowappoint", 
+        "name": "book_appointment", 
         "language": { "code": "en" },
         "components": [
             {
@@ -448,14 +461,14 @@ def call_external_post_api(from_number):
         print(name)
         return start_automation(from_number)
     else:
-        external_url = "https://graph.facebook.com/v22.0/606444145880553/messages"  # Example API URL
+        external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
         incoming_data = { 
     "messaging_product": "whatsapp", 
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "flowappoint", 
+        "name": "book_appointment", 
         "language": { "code": "en" },
         "components": [
             {
@@ -480,7 +493,7 @@ def call_external_post_api(from_number):
     
 
 def start_automation(from_number):
-    external_url = "https://graph.facebook.com/v22.0/606444145880553/messages"  # Example API URL
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     all_buttons = [
     {"id": "book_appointment", "title": "📅 Book Appointment"},
@@ -521,7 +534,7 @@ def start_automation(from_number):
 
 
 def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
-    url = f"https://graph.facebook.com/v22.0/606444145880553/messages"
+    url = f"https://graph.facebook.com/v22.0/563776386825270/messages"
 
 
     payload = { 
@@ -578,7 +591,7 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
 
 
 def old_user_send(from_number):
-    external_url = "https://graph.facebook.com/v22.0/606444145880553/messages"  # Example API URL
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     result = list(appointment.find({"whatsapp_number": from_number}))
 # Store only the latest appointment per patient

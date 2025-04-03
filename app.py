@@ -17,9 +17,9 @@ CORS(app)
 
 
 
-MONGO_URI = "mongodb+srv://indrajeet:indu0011@cluster0.qstxp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
-db = client.get_database("medicruise")
+db = client.get_database("caredb")
 doctors = db["doctors"] 
 appointment = db["appointment"] 
 templog = db["logs"] 
@@ -88,9 +88,9 @@ def webhook():
                         value = match.group(2)
                         tempdata = {"number":from_number,"id_value":value,"role":"custom_appointment","_id":from_number}
                         try:
-                            templog.update_one({'_id': from_number}, {'$set': tempdata})
-                        except:
                             templog.insert_one(tempdata)
+                        except:
+                            templog.update_one({'_id': from_number}, {'$set': tempdata})
                         return custom_appointment_flow(from_number)
                     else:
                         return "Invalid message type", 400
@@ -164,6 +164,26 @@ def update_user_query(id):
         return jsonify({'success': True, "message": "User updated"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/update_appointment/<string:id>/", methods=["POST"])
+def update_appointment_query(id):
+    try:
+        api_key = request.headers.get("x-api-key")
+        if api_key != API_KEY:
+            return jsonify({"error": "Unauthorized"}), 401
+        data = request.json
+        try:
+            doc_id = ObjectId(id)
+        except:
+            return jsonify({"error": "Invalid ObjectId"}), 400
+        result = appointment.update_one({'_id': doc_id}, {'$set': data})
+        if result.matched_count == 0:
+            return jsonify({"error": "User not found"}), 404
+        elif result.modified_count == 0:
+            return jsonify({"message": "No changes made"}), 200
+        return jsonify({'success': True, "message": "User updated"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/get_profile/<string:id>/", methods=["POST"])
@@ -226,8 +246,13 @@ def login():
         if user["password"]!= password:
             return jsonify({"error": "Invalid username or password"}), 401
 
+        try:
+            if user["role"]== 'staff':
+                return jsonify({"message": "Login successful","role":"staff","staffId":str(user['EmpID']),"doctorId":str(user['doctorId']) ,"user": str(user['_id']), "accessToken":str(user['accessToken']), "phonenumberID":str(user['phonenumberID'])}), 200
+        except:
+
         # ✅ Generate JWT Token
-        return jsonify({"message": "Login successful", "user": str(user['_id'])}), 200
+            return jsonify({"message": "Login successful","role":"doctor", "user": str(user['_id']), "accessToken":str(user['accessToken']), "phonenumberID":str(user['phonenumberID'])}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -238,6 +263,24 @@ def login():
 def get_users():
     users = list(doctors.find({}, {"_id": 0}))  # Exclude MongoDB's default _id field
     return jsonify(users)
+
+@app.route("/staff/<string:id>/", methods=["POST"])
+def get_staff_list(id):
+    try:
+        api_key = request.headers.get("x-api-key")
+        if not api_key or api_key != API_KEY:
+            return jsonify({"error": "Unauthorized"}), 401
+        # Fetch all appointments and convert ObjectId to string
+        documents = list(doctors.find({"role":"staff","doctorId":id}))
+        if not documents:
+            return jsonify({"error": "No appointments found"}), 404
+        # Convert ObjectId to string for JSON response
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+        return jsonify(documents), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Delete User (DELETE)
 @app.route("/delete_user", methods=["DELETE"])
@@ -300,13 +343,9 @@ def payment_callback(id):
 
 
 
-
-
-
-
+# if __name__ == "__main__":
+#     app.run(port=88,host="0.0.0.0",debug=True)
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
-
-
+    app.run(port=5000,debug=True)
