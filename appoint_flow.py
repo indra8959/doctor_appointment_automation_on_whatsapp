@@ -49,7 +49,7 @@ def send_payment_flow(from_number,name,date,slot,amount,link):
         "messaging_product": "whatsapp", 
         "to": from_number, "type": "template", 
         "template": { 
-            "name": "razorpay_send_link", 
+            "name": "razorpay_send_link_2", 
             "language": { 
                 "code": "en" 
             },
@@ -404,7 +404,7 @@ def custom_appointment_flow(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "clone_appointment_flow", 
+        "name": "clone_appointment_flow_3", 
         "language": { "code": "en" },
         "components": [
             {
@@ -550,14 +550,13 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
     formatted_date = datetime.strptime(doa, "%Y-%m-%d").strftime("%d-%m-%Y")
 
 
-
     payload = { 
         "messaging_product": "whatsapp", 
         "to": whatsapp_no, "type": "template", 
         "template": { 
             "name": "success_book", 
             "language": { 
-                "code": "en" 
+                "code": "en_US" 
             },
             "components": [
                 {
@@ -565,10 +564,10 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
                     "parameters":  [{
             "type": "location",
             'location': {
-          'latitude': 37.7749, 
-          'longitude': -122.4194, 
-          'name': "San Francisco",
-          'address': "California, USA"
+          'latitude': 30.210875294402626, 
+          'longitude': 74.94743978282561, 
+          'name': "Kalra Multispeciality Hospital",
+          'address': "Bathinda, India"
         }
           }]
 
