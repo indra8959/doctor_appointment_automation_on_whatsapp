@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from collections import Counter
+from zoneinfo import ZoneInfo
 
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
@@ -34,7 +35,7 @@ def dateandtime(id):
                 for date in disabled_dates
                 ]
     
-            current_time = datetime.now().time()
+            current_time = datetime.now(ZoneInfo("Asia/Kolkata")).time()
 
             cutoff_time = datetime.strptime("08:00AM", "%I:%M%p").time()
 
