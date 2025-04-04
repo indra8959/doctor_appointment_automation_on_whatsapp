@@ -18,9 +18,7 @@ admin = db["admin"]
 headers={'Authorization': 'Bearer EACHqNPEWKbkBOZBGDB1NEzQyDEsZAUcJwBMdopvDDWrS9JNRsWe1YAHc6C5k4pCQlJvScAX7URYSFE4wvMXlh7x9Uf6fwbccvQqceRxHxJFJLZC7szcNaSZCr9pJWE8g5S8SZCaNxRbMZA6dQNZBVaQzBtZBQJ4TNZAoZBuyZBjyVJDOOSKmSSsdqhFRKLUS6fm28zwKA7GhNsclSZAJtjQWTBWfzw5bOS2Fp53qqujNwm9f','Content-Type': 'application/json'}
 phone_id = '563776386825270'
 
-dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
-razorpayid = dxocument.get('razorpayid')
-razorpaykey = dxocument.get('razorpaykey')
+
 # def checkoldappointment(phonenumber,fdate,name,doctorid):
 #     result = list(appointment.find({"whatsapp_number":phonenumber,"doctor_phone_id":doctorid,"patient_name":name,"amount":{"$gt": 0}}))
 # # print(appoint.val())
@@ -236,6 +234,10 @@ def custom_book_appointment(data):
         dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
         fee = float(dxxocument.get('appointmentfee'))
 
+        dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
+        razorpayid = dxocument.get('razorpayid')
+        razorpaykey = dxocument.get('razorpaykey')
+
         link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
         print(link)
         amount = fee
@@ -381,6 +383,10 @@ def book_appointment(data):
 
         dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
         fee = float(dxxocument.get('appointmentfee'))
+
+        dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
+        razorpayid = dxocument.get('razorpayid')
+        razorpaykey = dxocument.get('razorpaykey')
 
 
         link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
