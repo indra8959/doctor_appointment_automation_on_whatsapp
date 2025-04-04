@@ -9,7 +9,7 @@ from appoint_flow import book_appointment, start_automation, appointment_flow, s
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
-from pdf import pdfdownload
+from pdf import pdfdownload,pdfdownloadcdate
 from date_and_slots import dateandtime
 
 app = Flask(__name__)
@@ -31,7 +31,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "Flask App Connected to MongoDB Atlas!"
+    return "all done"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -107,7 +107,20 @@ def webhook():
                     return old_user_send(from_number)
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
-                    return pdfdownload(from_number)
+                    return pdfdownloadcdate(from_number)
+                elif msg_type == 'text' and body.lower().split()[0] == "pdf":
+                    print(body.lower())
+
+                    match = re.search(r"\d{2}-\d{2}-\d{4}", body.lower())
+                    if match:
+                        extracted_date = match.group()  # "20-03-2024"
+    
+    # Convert to "YYYY-MM-DD" format
+                        formatted_date = datetime.strptime(extracted_date, "%d-%m-%Y").strftime("%Y-%m-%d")
+    
+                        print(formatted_date)
+
+                    return pdfdownload(from_number,formatted_date)
                 else:
                     print(body.lower())
                     return "Invalid message type", 400
@@ -262,6 +275,11 @@ def login():
 @app.route("/users", methods=["GET"])
 def get_users():
     users = list(doctors.find({}, {"_id": 0}))  # Exclude MongoDB's default _id field
+    return jsonify(users)
+
+@app.route("/fatch_date_and_time/<string:id>/", methods=["GET"])
+def get_datetime(id):
+    users = dateandtime(id) # Exclude MongoDB's default _id field
     return jsonify(users)
 
 @app.route("/staff/<string:id>/", methods=["POST"])

@@ -43,6 +43,8 @@ def send_payment_flow(from_number,name,date,slot,amount,link):
 
     print(from_number,name,date,slot,amount,link)
 
+    formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%d-%m-%Y")
+
     external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     incoming_data = { 
@@ -61,7 +63,7 @@ def send_payment_flow(from_number,name,date,slot,amount,link):
                         "text": name
                     },{
                         "type": "text",
-                        "text": date
+                        "text": formatted_date
                     },{
                         "type": "text",
                         "text": slot
@@ -114,7 +116,7 @@ def custom_book_appointment(data):
     pname = appoint_data.get('guardian_name')
     date = response_data.get('Date_of_appointment_0')
     slot = response_data.get('Time_Slot_1')
-
+    vaccine = response_data.get('vaccine')
     email = 'none'
     symptoms = 'none'
     age = 'none'
@@ -178,7 +180,8 @@ def custom_book_appointment(data):
         'address' : address,
         'role':'appointment',
         'status':'created',
-        "createdAt": 'x'
+        "createdAt": 'x',
+        "vaccine":vaccine
             }
     
     date_str = date
@@ -259,6 +262,7 @@ def book_appointment(data):
     pname = response_data.get('Guardian_Name')
     date = response_data.get('Date_of_appointment_0')
     slot = response_data.get('Time_Slot_1')
+    vaccine = response_data.get('vaccine')
 
     email = 'none'
     symptoms = 'none'
@@ -322,7 +326,8 @@ def book_appointment(data):
         'address' : address,
         'role':'appointment',
         'status':'created',
-        "createdAt": 'x'
+        "createdAt": 'x',
+        "vaccine":vaccine
             }
     
     date_str = date
@@ -426,7 +431,7 @@ def appointment_flow(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "book_appointment", 
+        "name": "appointmnet", 
         "language": { "code": "en" },
         "components": [
             {
@@ -468,7 +473,7 @@ def call_external_post_api(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "book_appointment", 
+        "name": "appointmnet", 
         "language": { "code": "en" },
         "components": [
             {
@@ -536,6 +541,9 @@ def start_automation(from_number):
 def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
     url = f"https://graph.facebook.com/v22.0/563776386825270/messages"
 
+    formatted_date = datetime.strptime(doa, "%Y-%m-%d").strftime("%d-%m-%Y")
+
+
 
     payload = { 
         "messaging_product": "whatsapp", 
@@ -569,7 +577,7 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
                     "text": appoint_no
                 }, {
                     "type": "text",
-                    "text": doa
+                    "text": formatted_date
                 }, {
                     "type": "text",
                     "text": time
@@ -585,7 +593,7 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
         }
 
     response = requests.post(url, json=payload, headers=headers)
-    return f"whatsapp://send?phone=+15551790637"
+    return f"whatsapp://send?phone=+919646465003"
 
 
 
@@ -609,7 +617,7 @@ def old_user_send(from_number):
             "title": display_name
                 })
 
-    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "Book Appointment"}]
+    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "New Appointment"}]
 
 # Function to send buttons in batches of 3
     def send_whatsapp_buttons(to_number, buttons_list):
