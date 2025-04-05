@@ -437,7 +437,7 @@ def appointment_flow(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "appointmnet", 
+        "name": "final_appointment", 
         "language": { "code": "en" },
         "components": [
             {
@@ -479,7 +479,7 @@ def call_external_post_api(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "appointmnet", 
+        "name": "final_appointment", 
         "language": { "code": "en" },
         "components": [
             {
@@ -554,9 +554,9 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
         "messaging_product": "whatsapp", 
         "to": whatsapp_no, "type": "template", 
         "template": { 
-            "name": "success_book", 
+            "name": "success_book_2", 
             "language": { 
-                "code": "en_US" 
+                "code": "en" 
             },
             "components": [
                 {
@@ -610,6 +610,9 @@ def old_user_send(from_number):
 # Store only the latest appointment per patient
     unique_patients = {}
     latest_appointments = []
+
+    if len(result)<1:
+        return appointment_flow(from_number)
 
     for record in result:
         patient_name = record.get("patient_name")

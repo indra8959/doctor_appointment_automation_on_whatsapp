@@ -344,7 +344,10 @@ def payment_callback(id):
 
         appoint_number = str(formatted_date)+'-'+str(data_length)
 
-        appointment.update_one({'_id': doc_id},{'$set':{'status':'success','pay_id':callback_data.get('razorpay_payment_id'),'appoint_number':appoint_number,'amount':200}})
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+
+        appointment.update_one({'_id': doc_id},{'$set':{'status':'success','pay_id':callback_data.get('razorpay_payment_id'),'appoint_number':appoint_number,'amount':fee}})
 
         name = str(retrieved_data['patient_name'])
         payment_id = str(callback_data.get('razorpay_payment_id'))
