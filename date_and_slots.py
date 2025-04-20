@@ -13,7 +13,7 @@ db = client.get_database("caredb")
 doctors = db["doctors"] 
 appointment = db["appointment"] 
 templog = db["logs"] 
-
+disableslot = db["disableslot"] 
 
 def dateandtime(id):
         if id == 'date':
@@ -100,7 +100,26 @@ def dateandtime(id):
                     if obj["enabled"]:
                         del obj["enabled"]
 
-                return result
+                disabled_slots = []
+
+                documentsst = list(disableslot.find({}))
+                if documentsst:
+
+
+                    disabled_slots = documentsst
+
+# Create a set of disabled slot times for easy lookup
+                disabled_set = {item["slot"] for item in disabled_slots if not item["enable"]}
+
+# Add 'enabled' field to slots accordingly
+                updated_slots = []
+                for slot in result:
+                    if slot["id"] in disabled_set:
+                        updated_slots.append({**slot, "enabled": False})
+                    else:
+                        updated_slots.append(slot)
+                        
+                return updated_slots
             else:
                 xslot = datas['slots']['slotsvalue']
 
@@ -112,12 +131,29 @@ def dateandtime(id):
                 for index, item in enumerate(xslot)
                 ]
 
-            
-                return formatted_output
+                disabled_slots = []
 
+                documentsst = list(disableslot.find({}))
+                if documentsst:
+                    disabled_slots = documentsst
 
+                # disabled_slots = [
+                #     {"date": "2025-04-09", "slot": "09:00 AM - 10:00 AM", "enable": False},
+                #     {"date": "2025-04-09", "slot": "02:00 PM - 03:00 PM", "enable": False},
+                # ]
 
+# Create a set of disabled slot times for easy lookup
+                disabled_set = {item["slot"] for item in disabled_slots if not item["enable"]}
 
+# Add 'enabled' field to slots accordingly
+                updated_slots = []
+                for slot in formatted_output:
+                    if slot["id"] in disabled_set:
+                        updated_slots.append({**slot, "enabled": False})
+                    else:
+                        updated_slots.append(slot)
+
+                return updated_slots
 
 
 

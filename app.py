@@ -5,12 +5,18 @@ from datetime import datetime, timedelta
 import time
 import json
 # import datetime
-from appoint_flow import book_appointment, start_automation, appointment_flow, success_appointment,old_user_send,custom_appointment_flow
+from receipt import receiptme
+from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 from pdf import pdfdownload,pdfdownloadcdate
 from date_and_slots import dateandtime
+
+import hmac
+import hashlib
+import json
+
 
 app = Flask(__name__)
 CORS(app)
@@ -23,6 +29,7 @@ db = client.get_database("caredb")
 doctors = db["doctors"] 
 appointment = db["appointment"] 
 templog = db["logs"] 
+disableslot = db["disableslot"] 
 
 API_KEY = "1234"
 
@@ -31,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "all done"
+    return "updated 2.0"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -83,6 +90,10 @@ def webhook():
                     print(button_id)
                     if button_id == "book_appointment":
                         return appointment_flow(from_number)
+                    elif button_id == "Receipt":
+                        return receiptme(from_number)
+                    elif button_id == "no":
+                        return sendthankyou(from_number)
                     elif checktext(button_id) == "appoint_id":
                         match = re.match(r"(appoint_id)([a-f0-9]+)", button_id)
                         value = match.group(2)
@@ -108,6 +119,9 @@ def webhook():
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
                     return pdfdownloadcdate(from_number)
+                elif msg_type == 'text' and body.lower() == "receipt":
+                    print(body.lower())
+                    return receiptme(from_number)
                 elif msg_type == 'text' and body.lower().split()[0] == "pdf":
                     print(body.lower())
 
@@ -132,6 +146,7 @@ def webhook():
             return jsonify({"error": "Invalid request"}), 400
 
 
+
 def find_user():
     try:
         result = list(doctors.find({"phone": "8767"}, {"_id": 0}))  # Convert cursor to list, exclude '_id'
@@ -141,6 +156,7 @@ def find_user():
             return 404
     except Exception as e:
         return 404
+
 
 
 @app.route("/add_user", methods=["POST"])
@@ -157,6 +173,63 @@ def add_user_query():
         return jsonify({"inserted_id": str(result)}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
+@app.route("/slot_disable", methods=["POST"])
+def slot_disable():
+    try:
+        api_key = request.headers.get("x-api-key")
+        if api_key != API_KEY:
+            return jsonify({"error": "Unauthorized"}), 401
+        data = request.json
+
+        input_str = data.get("date")+data.get("slot")
+
+# Extract the date and starting time
+        date_part = input_str[:10]              # "2025-04-17"
+        time_part = input_str[10:19].strip()    # "09:00 AM"
+
+# Combine and parse
+        dt = datetime.strptime(date_part + time_part, "%Y-%m-%d%I:%M %p")
+
+# Format to "YYYYMMDDHH"
+        formatted = dt.strftime("%Y%m%d%H")
+
+        print(formatted)
+
+        mdata = {
+            "date" : data.get("date"),
+            "slot" : data.get("slot"),
+            "enable" : data.get("enable"),
+            "doctor_id" : '67ee5e1bde4cb48c515073ee',
+            "_id": formatted
+        }
+
+        try:
+            disableslot.insert_one(mdata)
+        except:
+            disableslot.update_one({'_id': formatted}, {'$set': mdata})
+        return jsonify({"inserted_id": str(formatted)}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
+@app.route("/get_slot", methods=["POST"])
+def get_slot():
+    try:
+        api_key = request.headers.get("x-api-key")
+        if not api_key or api_key != API_KEY:
+            return jsonify({"error": "Unauthorized"}), 401
+        # Fetch all appointments and convert ObjectId to string
+        documents = list(disableslot.find({}))
+        if not documents:
+            return jsonify({"error": "No appointments found"}), 404
+        # Convert ObjectId to string for JSON response
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+        return jsonify(documents), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 
 @app.route("/update_user/<string:id>/", methods=["POST"])
 def update_user_query(id):
@@ -361,12 +434,232 @@ def payment_callback(id):
         # Payment failed or was not captured
         print("Payment failed or not captured!")
         return jsonify({'status': 'failed', 'message': 'Payment failed or not captured'}), 400
+    
+def getindex(docter_id,tslot,date):
 
+    doc_id = ObjectId(docter_id)
+    document = doctors.find_one({"_id": doc_id})
+    xslot = document['slots']['slotsvalue']
+
+    formatted_output = [
+                {
+                     "id": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+ datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+                    "slot": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+                    "length": item["maxno"]
+                }
+                for index, item in enumerate(xslot)
+                ]
+
+    target_id = tslot
+    total_length = 0
+
+    for slot in formatted_output:
+        if slot['id'] == target_id:
+            break
+        total_length += int(slot['length'])
+
+
+    result = list(appointment.find({"doctor_phone_id": docter_id,'time_slot':tslot ,"date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+    data_length = 1
+    if result:
+        data_length = len(result)+1
+
+    appointment_number = data_length+total_length
+    print(appointment_number)
+    return appointment_number
+
+
+WEBHOOK_SECRET = "doctor"
+
+@app.route('/razorpay/webhook', methods=['POST'])
+def razorpay_webhook():
+    try:
+        payload = request.data
+        received_signature = request.headers.get('X-Razorpay-Signature')
+
+        # Create HMAC SHA256 signature
+        generated_signature = hmac.new(
+            WEBHOOK_SECRET.encode(),
+            payload,
+            hashlib.sha256
+        ).hexdigest()
+
+        # Compare signatures
+        if not hmac.compare_digest(generated_signature, received_signature):
+            print("❌ Invalid signature")
+            return jsonify({'status': 'unauthorized'}), 400
+
+        # Signature verified
+        data = json.loads(payload)
+        # print("✅ Webhook verified:", json.dumps(data, indent=2))
+
+        event = data.get("event")
+
+        # if event == "payment_link.paid":
+        #     payment = data["payload"]["payment"]["entity"]
+        #     print("💰 Payment Received:", payment["id"], payment["amount"])
+
+        if event == "order.paid":
+            payment_entity = data["payload"]["payment"]["entity"]
+            payment_id = payment_entity["id"]
+            contact = str(payment_entity["contact"])
+            contact = contact.lstrip('+')
+
+            print(f"✅ Payment ID: {payment_id}")
+            print(f"📞 Contact: {contact}")
+
+            document = templog.find_one({'_id':contact})
+
+            doc_id = ObjectId(document["current_id"])
+            retrieved_data = appointment.find_one({"_id": doc_id})
+
+            print(retrieved_data['doctor_phone_id'])
+
+            result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":retrieved_data['date_of_appointment'],"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+            data_length = 1
+            if result:
+                data_length = len(result)+1
+
+            xdate = retrieved_data['date_of_appointment']
+            date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+            formatted_date = date_obj.strftime("%Y%m%d")
+
+            appoint_number = str(formatted_date)+'-'+str(data_length)
+
+
+            dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+            fee = float(dxxocument.get('appointmentfee'))
+
+            index_number = getindex(retrieved_data['doctor_phone_id'],retrieved_data['time_slot'],xdate)
+
+            appointment.update_one({'_id': doc_id},{'$set':{'status':'success','pay_id':payment_id,'appoint_number':appoint_number,'amount':fee,'appointment_index':index_number}})
+
+            name = str(retrieved_data['patient_name'])
+            payment_id = str(payment_id)
+            doa = str(retrieved_data['date_of_appointment'])
+            tm = str(retrieved_data['time_slot'])
+            phone = str(retrieved_data['whatsapp_number'])
+
+            whatsapp_url = success_appointment(payment_id,index_number,name,doa,tm,phone)
+            return redirect(whatsapp_url)
+
+        return jsonify({'status': 'success'}), 200
+
+    except Exception as e:
+        print("⚠️ Exception:", str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+
+@app.route('/payment_callback2/<string:id>/', methods=['GET', 'POST'])
+def payment_callback2(id):
+    if request.method == 'GET':
+        # Handle GET callback
+        callback_data = request.args.to_dict()
+    else:  # POST
+        # Handle POST callback
+        callback_data = request.json
+
+    # Process the Razorpay response
+    print("Callback Data:", callback_data)
+
+    # Verify the payment status and act accordingly
+    if callback_data.get('razorpay_payment_link_status') == 'paid':
+
+        doc_id = ObjectId(id)
+        retrieved_data = appointment.find_one({"_id": doc_id})
+
+        print(retrieved_data['doctor_phone_id'])
+
+        result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":retrieved_data['date_of_appointment'],"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+        data_length = 1
+        if result:
+            data_length = len(result)+1
+
+        xdate = retrieved_data['date_of_appointment']
+        date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+        formatted_date = date_obj.strftime("%Y%m%d")
+
+        appoint_number = str(formatted_date)+'-'+str(data_length)
+
+        print('1')
+
+
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+
+        print('1')
+
+
+        index_number = getindex(retrieved_data['doctor_phone_id'],retrieved_data['time_slot'],xdate)
+
+        print('1')
+
+
+        appointment.update_one({'_id': doc_id},{'$set':{'status':'success','pay_id':callback_data.get('razorpay_payment_id'),'appoint_number':appoint_number,'amount':fee,'appointment_index':index_number}})
+
+        print('1')
+        name = str(retrieved_data['patient_name'])
+        payment_id = str(callback_data.get('razorpay_payment_id'))
+        doa = str(retrieved_data['date_of_appointment'])
+        tm = str(retrieved_data['time_slot'])
+        phone = str(retrieved_data['whatsapp_number'])
+
+        print('1')
+
+
+        whatsapp_url = success_appointment(payment_id,index_number,name,doa,tm,phone)
+
+        print('1')
+
+        return redirect(whatsapp_url)
+    else:
+        # Payment failed or was not captured
+        print("Payment failed or not captured!")
+        return jsonify({'status': 'failed', 'message': 'Payment failed or not captured'}), 400
+    
+def getindex(docter_id,tslot,date):
+
+    doc_id = ObjectId(docter_id)
+    document = doctors.find_one({"_id": doc_id})
+    xslot = document['slots']['slotsvalue']
+
+    formatted_output = [
+                {
+                     "id": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+ datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+                    "slot": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+                    "length": item["maxno"]
+                }
+                for index, item in enumerate(xslot)
+                ]
+
+    target_id = tslot
+    total_length = 1
+
+    for slot in formatted_output:
+        if slot['id'] == target_id:
+            total_length += int(slot['length'])
+            break
+        total_length += int(slot['length'])
+
+
+    result = list(appointment.find({"doctor_phone_id": docter_id,'time_slot':tslot ,"date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+    data_length = 0
+    if result:
+        data_length = len(result)
+
+    appointment_number = total_length-data_length-1
+    print(appointment_number)
+    return appointment_number
 
 
 if __name__ == "__main__":
     app.run(port=5000,host="0.0.0.0")
 
 
+
+
+
 # if __name__ == "__main__":
 #     app.run(port=5000,debug=True)
+

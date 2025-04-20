@@ -6,6 +6,9 @@ import time
 import json
 from bson.objectid import ObjectId
 from razorpay import pay_link
+import os
+from PIL import Image, ImageDraw, ImageFont
+from io import BytesIO
 
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
@@ -49,6 +52,7 @@ def send_payment_flow(from_number,name,date,slot,amount,link):
         "messaging_product": "whatsapp", 
         "to": from_number, "type": "template", 
         "template": { 
+            # "name": "razorpay_send_link_manual", 
             "name": "razorpay_send_link_2", 
             "language": { 
                 "code": "en" 
@@ -98,8 +102,6 @@ def custom_book_appointment(data):
     from_number = message_info.get('from')
 
     document = templog.find_one({'_id':from_number})
-
-
     appoint_data = appointment.find_one({"_id": ObjectId(document["id_value"])})
 
     print(appoint_data)
@@ -111,7 +113,7 @@ def custom_book_appointment(data):
     
 
     name = appoint_data.get('patient_name')
-    pname = appoint_data.get('guardian_name')
+    pname = 'none'
     date = response_data.get('Date_of_appointment_0')
     slot = response_data.get('Time_Slot_1')
     vaccine = response_data.get('vaccine')
@@ -122,7 +124,10 @@ def custom_book_appointment(data):
     city = 'none'
     address = 'none'
 
-    
+    if appoint_data.get('guardian_name'):
+        email = appoint_data.get('guardian_name')
+    else:
+        email = 'none'
 
     if appoint_data.get('email'):
         email = appoint_data.get('email')
@@ -221,29 +226,161 @@ def custom_book_appointment(data):
 
         appoint_number = str(formatted_date)+'-'+str(data_length)
 
-        appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0})
+
+
+
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+
+
+
+
+        index_number = getindex(retrieved_data['doctor_phone_id'],slot,xdate)
+
+        
+
+
+
+        xid = appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0,'appointment_index':index_number}).inserted_id
+
+
+        tempdata = {"number":from_number,"current_id":xid,"_id":from_number}
+        try:
+            templog.insert_one(tempdata)
+        except:
+            templog.update_one({'_id': from_number}, {'$set': tempdata})
 
         name = str(retrieved_data['patient_name'])
+        payment_id = str(pay_id)
+        doa = str(retrieved_data['date_of_appointment'])
+        tm = str(retrieved_data['time_slot'])
         phone = str(retrieved_data['whatsapp_number'])
 
-        return success_appointment(pay_id,appoint_number,name,date,slot,phone)
+
+        # pay_id = str(retrieved_data['pay_id'])
+        # pay_id = "old_"+pay_id
+
+        # appoint_number = str(formatted_date)+'-'+str(data_length)
+
+        # appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0})
+
+        # name = str(retrieved_data['patient_name'])
+        # phone = str(retrieved_data['whatsapp_number'])
+
+        return success_appointment(pay_id,index_number,name,date,slot,phone)
+    
+        # doc_id = ObjectId(id)
+        # retrieved_data = appointment.find_one({"_id": doc_id})
+
+        # print(retrieved_data['doctor_phone_id'])
+
+        # result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":retrieved_data['date_of_appointment'],"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+        # data_length = 1
+        # if result:
+        #     data_length = len(result)+1
+
+        # xdate = retrieved_data['date_of_appointment']
+        # date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+        # formatted_date = date_obj.strftime("%Y%m%d")
+
+        # appoint_number = str(formatted_date)+'-'+str(data_length)
+
+        # print('1')
+
+
+        # dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        # fee = float(dxxocument.get('appointmentfee'))
+
+        # print('1')
+
+
+        # index_number = getindex(retrieved_data['doctor_phone_id'],retrieved_data['time_slot'],xdate)
+
+        # print('1')
+
+
+        # appointment.update_one({'_id': doc_id},{'$set':{'status':'success','pay_id':callback_data.get('razorpay_payment_id'),'appoint_number':appoint_number,'amount':fee,'appointment_index':index_number}})
+
+        # print('1')
+        # name = str(retrieved_data['patient_name'])
+        # payment_id = str(callback_data.get('razorpay_payment_id'))
+        # doa = str(retrieved_data['date_of_appointment'])
+        # tm = str(retrieved_data['time_slot'])
+        # phone = str(retrieved_data['whatsapp_number'])
+
+        # print('1')
+
+
+        # whatsapp_url = success_appointment(payment_id,index_number,name,doa,tm,phone)
+
+        # print('1')
+
+        # return redirect(whatsapp_url)
+    
+
+
+
     else:
         id = str(appointment.insert_one(dataset).inserted_id)
         print(id)
 
         dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
         fee = float(dxxocument.get('appointmentfee'))
+        # paymentlink = dxxocument.get('paymentlink')
+
+        tempdata = {"number":from_number,"current_id":id,"_id":from_number}
+        try:
+            templog.insert_one(tempdata)
+        except:
+            templog.update_one({'_id': from_number}, {'$set': tempdata})
+
 
         dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
         razorpayid = dxocument.get('razorpayid')
         razorpaykey = dxocument.get('razorpaykey')
 
         link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
+        # link = paymentlink
         print(link)
         amount = fee
         return send_payment_flow(from_number,name,date,slot,amount,link)
 
-        
+
+
+def getindex(docter_id,tslot,date):
+
+    doc_id = ObjectId(docter_id)
+    document = doctors.find_one({"_id": doc_id})
+    xslot = document['slots']['slotsvalue']
+
+    formatted_output = [
+                {
+                     "id": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+ datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+                    "slot": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+                    "length": item["maxno"]
+                }
+                for index, item in enumerate(xslot)
+                ]
+
+    target_id = tslot
+    total_length = 1
+
+    for slot in formatted_output:
+        if slot['id'] == target_id:
+            total_length += int(slot['length'])
+            break
+        total_length += int(slot['length'])
+
+
+    result = list(appointment.find({"doctor_phone_id": docter_id,'time_slot':tslot ,"date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+    data_length = 0
+    if result:
+        data_length = len(result)
+
+    appointment_number = total_length-data_length-1
+    print(appointment_number)
+    return appointment_number
+
 
 
 def book_appointment(data):
@@ -261,7 +398,7 @@ def book_appointment(data):
         return custom_book_appointment(data)
 
     name = response_data.get('Patient_Name_2')
-    pname = response_data.get('Guardian_Name')
+    pname = 'none'
     date = response_data.get('Date_of_appointment_0')
     slot = response_data.get('Time_Slot_1')
     vaccine = response_data.get('vaccine')
@@ -272,6 +409,11 @@ def book_appointment(data):
     dob = 'none'
     city = 'none'
     address = 'none'
+
+    if response_data.get('Guardian_Name'):
+        pname = response_data.get('Guardian_Name')
+    else:
+        pname = 'none'
 
 
     if response_data.get('Email_4'):
@@ -383,6 +525,13 @@ def book_appointment(data):
 
         dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
         fee = float(dxxocument.get('appointmentfee'))
+        # paymentlink = dxxocument.get('paymentlink')
+
+        tempdata = {"number":from_number,"current_id":id,"_id":from_number}
+        try:
+            templog.insert_one(tempdata)
+        except:
+            templog.update_one({'_id': from_number}, {'$set': tempdata})
 
         dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
         razorpayid = dxocument.get('razorpayid')
@@ -390,6 +539,9 @@ def book_appointment(data):
 
 
         link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
+
+
+        # link = paymentlink
         print(link)
         amount = fee
         return send_payment_flow(from_number,name,date,slot,amount,link)
@@ -404,7 +556,7 @@ def custom_appointment_flow(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "clone_appointment_flow_3", 
+        "name": "clone_appointment_flow_4", 
         "language": { "code": "en" },
         "components": [
             {
@@ -437,7 +589,7 @@ def appointment_flow(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "final_appointment", 
+        "name": "final_appointment2", 
         "language": { "code": "en" },
         "components": [
             {
@@ -479,7 +631,7 @@ def call_external_post_api(from_number):
     "to": from_number, 
     "type": "template", 
     "template": { 
-        "name": "final_appointment", 
+        "name": "final_appointment2", 
         "language": { "code": "en" },
         "components": [
             {
@@ -503,13 +655,12 @@ def call_external_post_api(from_number):
         return "OK", 200
     
 
-def start_automation(from_number):
+def start_automation(from_number,):
     external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     all_buttons = [
-    {"id": "book_appointment", "title": "📅 Book Appointment"},
-    {"id": "lab_tests", "title": "🧪 Book Lab Test"},
-    {"id": "buy_medicine", "title": "💊 Buy Medicine"}
+    {"id": "Receipt", "title": "Yes"},
+    {"id": "no", "title": "No"}
     ]
 
 # Function to send buttons in batches of 3
@@ -524,7 +675,7 @@ def start_automation(from_number):
             "type": "interactive",
             "interactive": {
                 "type": "button",
-                "body": {"text": "Please select an option:"},
+                "body": {"text": "Download Transaction Receipt?"},
                 "action": {
                     "buttons": [{"type": "reply", "reply": btn} for btn in buttons]
                 }
@@ -550,11 +701,59 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
     formatted_date = datetime.strptime(doa, "%Y-%m-%d").strftime("%d-%m-%Y")
 
 
+    # payload = { 
+    #     "messaging_product": "whatsapp", 
+    #     "to": whatsapp_no, "type": "template", 
+    #     "template": { 
+    #         "name": "success_book_2", 
+    #         "language": { 
+    #             "code": "en" 
+    #         },
+    #         "components": [
+    #             {
+    #                 "type": "header",
+    #                 "parameters":  [{
+    #         "type": "location",
+    #         'location': {
+    #       'latitude': 30.210875294402626, 
+    #       'longitude': 74.94743978282561, 
+    #       'name': "Kalra Multispeciality Hospital",
+    #       'address': "Bathinda, India"
+    #     }
+    #       }]
+
+    #             },
+    #              {
+    #     "type": "body",
+    #     "parameters": [ {
+    #                 "type": "text",
+    #                 "text": name
+    #             }, {
+    #                 "type": "text",
+    #                 "text": appoint_no
+    #             }, {
+    #                 "type": "text",
+    #                 "text": formatted_date
+    #             }, {
+    #                 "type": "text",
+    #                 "text": time
+    #             },
+    #       {
+    #                 "type": "text",
+    #                 "text": payment_id
+    #             }
+    #     ]
+    #   }
+
+    #         ]} 
+    #     }
+
+
     payload = { 
         "messaging_product": "whatsapp", 
         "to": whatsapp_no, "type": "template", 
         "template": { 
-            "name": "success_book_2", 
+            "name": "success_location", 
             "language": { 
                 "code": "en" 
             },
@@ -574,31 +773,200 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
                 },
                  {
         "type": "body",
-        "parameters": [ {
-                    "type": "text",
-                    "text": name
-                }, {
-                    "type": "text",
-                    "text": appoint_no
-                }, {
-                    "type": "text",
-                    "text": formatted_date
-                }, {
-                    "type": "text",
-                    "text": time
-                },
-          {
-                    "type": "text",
-                    "text": payment_id
-                }
+        "parameters": [ 
         ]
       }
 
             ]} 
         }
+    
 
     response = requests.post(url, json=payload, headers=headers)
+
+    appoint_no = str(appoint_no)
+    
+    img = generate_appointment_image(appoint_no,formatted_date,time,name)
+    # ok = compress_to_10kb(img, output_path="img.jpg")
+    
+    kk = imagesend(whatsapp_no)
+
+    start_automation(whatsapp_no)
+
+    # response = requests.post(url, json=payload, headers=headers)
     return f"whatsapp://send?phone=+919646465003"
+
+
+
+
+
+
+def imagesend(whatsapp_no):
+
+    WHATSAPP_ACCESS_TOKEN = "EACHqNPEWKbkBOZBGDB1NEzQyDEsZAUcJwBMdopvDDWrS9JNRsWe1YAHc6C5k4pCQlJvScAX7URYSFE4wvMXlh7x9Uf6fwbccvQqceRxHxJFJLZC7szcNaSZCr9pJWE8g5S8SZCaNxRbMZA6dQNZBVaQzBtZBQJ4TNZAoZBuyZBjyVJDOOSKmSSsdqhFRKLUS6fm28zwKA7GhNsclSZAJtjQWTBWfzw5bOS2Fp53qqujNwm9f"
+    PDF_FILE_PATH = 'img.jpg'
+
+    PHONE_NUMBER_ID = "563776386825270"
+
+
+# API endpoint for media upload
+    upload_url = f"https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/media"
+
+# Headers
+    headers = {
+    "Authorization": f"Bearer {WHATSAPP_ACCESS_TOKEN}"
+    }
+
+# File upload
+    files = {
+        "file": (PDF_FILE_PATH, open(PDF_FILE_PATH, "rb"), "image/jpeg"),
+        "type": (None, "image/jpeg"),
+        "messaging_product": (None, "whatsapp")
+        }
+
+    response = requests.post(upload_url, headers=headers, files=files)
+
+    print(response)
+
+# Print response
+    print(response.json()['id'])
+
+
+    PDF_FILE_ID = response.json()['id']  # Extracted from your provided data
+
+
+        
+    url = f"https://graph.facebook.com/v22.0/563776386825270/messages"
+
+    payload = {
+  "messaging_product": "whatsapp",
+  "to": whatsapp_no,
+  "type": "template",
+  "template": {
+    "name": "success_image",
+    "language": {
+      "code": "en"
+    },
+    "components": [
+      {
+        "type": "header",
+        "parameters": [
+          {
+            "type": "image",
+            "image": {
+            #   "link": "https://78b9-2409-40c4-21c8-f1ea-8026-7db7-c465-cdae.ngrok-free.app/static/img.jpg"
+            "id": PDF_FILE_ID
+         
+            }
+          }
+        ]
+      },
+      {
+        "type": "body",
+        "parameters": [
+        ]
+      }
+    ]
+  }
+}
+
+
+    
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    print(response)
+
+    return "OK", 200
+
+def generate_appointment_image(number, date, time, name):
+    # Load background image
+    background_path = "bgdr.jpg"  # Replace with actual path
+    background = Image.open(background_path).convert("RGB")
+    background = background.resize((800, 800))
+
+    draw = ImageDraw.Draw(background)
+    scale = 800 / 800
+
+    texts = [
+        {"text": "Hello Dear " + name, "font_size": int(32 * scale), "y_offset": int(50 * scale)},
+        {"text": "Your appointment has been confirmed", "font_size": int(32 * scale), "y_offset": int(90 * scale)},
+        {"text": "Appointment No.", "font_size": int(28 * scale), "y_offset": int(200 * scale)},
+        {"text": number, "font_size": int(150 * scale), "y_offset": int(240 * scale), "color": "green"},
+        {"text": "Date - " + date, "font_size": int(36 * scale), "y_offset": int(460 * scale)},
+        {"text": "Time - " + time, "font_size": int(36 * scale), "y_offset": int(520 * scale)},
+    ]
+
+    disclaimer_text = (
+        "*Disclaimer :\n"
+        "While we strive to honor all appointment times, "
+        "please note that there may be delays due to unforeseen emergencies "
+        "or circumstances beyond our control. We appreciate your patience and understanding."
+    )
+
+    bold_font_path = "pt.ttf"
+
+    for item in texts:
+        text = item["text"]
+        font_size = item["font_size"]
+        y_offset = item["y_offset"]
+        color = item.get("color", "black")
+
+        try:
+            font = ImageFont.truetype(bold_font_path, font_size)
+        except OSError:
+            font = ImageFont.load_default()
+
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        x = (background.width - text_width) / 2
+        draw.text((x, y_offset), text, font=font, fill=color)
+
+    # Draw disclaimer
+    try:
+        disclaimer_font = ImageFont.truetype(bold_font_path, 24)
+    except OSError:
+        disclaimer_font = ImageFont.load_default()
+
+    # Wrap disclaimer text
+    import textwrap
+    wrapped_disclaimer = textwrap.fill(disclaimer_text, width=60)
+
+    # Positioning near bottom
+    draw.multiline_text(
+        (40, 620),
+        wrapped_disclaimer,
+        font=disclaimer_font,
+        fill="black",
+        align="left",
+        spacing=10
+    )
+
+    background.save("img.jpg")
+
+    return background
+
+
+
+# def compress_to_10kb(image, output_path="img.jpg", target_kb=20):
+#     quality = 95
+#     step = 5
+#     target_bytes = target_kb * 1024
+
+#     while quality > 5:
+#         buffer = BytesIO()
+#         image.save(buffer, format='JPEG', quality=quality, optimize=True)
+#         size = buffer.tell()
+
+#         if size <= target_bytes:
+#             with open(output_path, "wb") as f:
+#                 f.write(buffer.getvalue())
+#             print(f"✅ Compressed to {size / 1024:.2f} KB at quality {quality}")
+#             return
+
+#         quality -= step
+
+#     print("❌ Could not compress under 10KB without major loss.")
+#     return 2
 
 
 
@@ -625,7 +993,7 @@ def old_user_send(from_number):
             "title": display_name
                 })
 
-    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "New Appointment"}]
+    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "Book New Appointment"}]
 
 # Function to send buttons in batches of 3
     def send_whatsapp_buttons(to_number, buttons_list):
@@ -641,7 +1009,7 @@ def old_user_send(from_number):
             "type": "interactive",
             "interactive": {
                 "type": "button",
-                "body": {"text": "Please select an option:"},
+                "body": {"text": "Choose Patient`s Name:"},
                 "action": {
                     "buttons": [{"type": "reply", "reply": btn} for btn in last_three_buttons]
                 }
@@ -660,3 +1028,18 @@ def old_user_send(from_number):
     return "OK", 200
 
 
+
+def sendthankyou(recipientNumber):
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"
+    payload = {
+  'messaging_product': 'whatsapp',
+  'receipient_type':"individual",
+  'to': recipientNumber,
+  'text':{'body':'Thankyou'},
+  'type': 'text'
+    }
+    response = requests.post(external_url, json=payload, headers=headers)
+
+    print(response)
+
+    return "OK", 200

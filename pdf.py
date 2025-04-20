@@ -45,18 +45,19 @@ def pdfdownload(from_number,zxdate):
 
     for slot in formatted_output:
         slot_data = [appt for appt in json_data if appt["time_slot"] == slot["slot"]]
-    
+
         while len(slot_data) < int(slot["length"]):
                 slot_data.append({
                      'patient_name': ' ',
                      'appoint_number':' ',
                      'time_slot':slot["slot"],
-                     'age':' ',
+                     'date_of_birth':' ',
                      'whatsapp_number':' ',
                      'pay_id':' ',
                      'city':' ',
                      'vaccine':' '
                      })
+        slot_data.reverse()
     
         custom_array.extend(slot_data)
 
@@ -65,21 +66,25 @@ def pdfdownload(from_number,zxdate):
     if json_data:
 
 # Convert JSON data to table format
-        table_data = [["S.No", "Appointment No.", "Time Slot", "Name",
+        table_data = [["S.No",
+                        # "Appointment No.",
+                          "Time Slot", "Name",
                         # "Guardian Name",
-                          "Age", "WhatsApp No.","Payment ID","City","vaccine","Remark"]]  # Table header
+                          "Date of Birth", "WhatsApp No.",
+                        #   "Payment ID",
+                          "City","vaccine","Remark"]]  # Table header
 
         for i, item in enumerate(json_data, start=1):
                 
             table_data.append([
         str(i),  # Serial number
-        item["appoint_number"],
+        # item["appoint_number"],
         item["time_slot"],
         item["patient_name"], 
         # item["guardian_name"],
-        item["age"], 
+        item["date_of_birth"], 
         item["whatsapp_number"], 
-        item["pay_id"], 
+        # item["pay_id"], 
         item["city"],
         item["vaccine"],
         "        ",
@@ -228,6 +233,7 @@ def pdfdownloadcdate(from_number):
                      'city':' ',
                      'vaccine':' '
                      })
+        slot_data.reverse()
     
         custom_array.extend(slot_data)
 
@@ -236,7 +242,9 @@ def pdfdownloadcdate(from_number):
     if json_data:
 
 # Convert JSON data to table format
-        table_data = [["S.No", "Appointment No.", "Time Slot", "Name",
+        table_data = [["S.No",
+                        # "Appointment No.",
+                          "Time Slot", "Name",
                         # "Guardian Name",
                           "Age", "WhatsApp No.","Payment ID","City","vaccine","Remark"]]  # Table header
 
@@ -245,7 +253,7 @@ def pdfdownloadcdate(from_number):
             table_data.append([
         str(i),  # Serial number
         item["appoint_number"],
-        item["time_slot"],
+        # item["time_slot"],
         item["patient_name"], 
         # item["guardian_name"],
         item["age"], 

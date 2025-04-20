@@ -17,14 +17,14 @@ def pay_link(name,number,email,id,rs,rzid,rzk):
     "description": "Payment for service",
     "customer": {
         "name": name,
-        "email": email,
+        # "email": 'test@gmail.vom',
         "contact": number
     },
     "notify": {
         "sms": False,
         "email": False
     },
-    "callback_url": "https://care2connect.in/payment_callback/"+id+"/",
+    "callback_url": "https://care2connect.in/payment_callback2/"+id+"/",
     "callback_method": "get"
 }
 
