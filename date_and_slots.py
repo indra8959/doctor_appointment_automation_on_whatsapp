@@ -102,7 +102,7 @@ def dateandtime(id):
 
                 disabled_slots = []
 
-                documentsst = list(disableslot.find({}))
+                documentsst = list(disableslot.find({'date':id}))
                 if documentsst:
 
 
@@ -110,6 +110,8 @@ def dateandtime(id):
 
 # Create a set of disabled slot times for easy lookup
                 disabled_set = {item["slot"] for item in disabled_slots if not item["enable"]}
+
+                print(disabled_set)
 
 # Add 'enabled' field to slots accordingly
                 updated_slots = []
@@ -133,7 +135,7 @@ def dateandtime(id):
 
                 disabled_slots = []
 
-                documentsst = list(disableslot.find({}))
+                documentsst = list(disableslot.find({'date':id}))
                 if documentsst:
                     disabled_slots = documentsst
 
@@ -144,6 +146,8 @@ def dateandtime(id):
 
 # Create a set of disabled slot times for easy lookup
                 disabled_set = {item["slot"] for item in disabled_slots if not item["enable"]}
+
+                print(disabled_set)
 
 # Add 'enabled' field to slots accordingly
                 updated_slots = []
