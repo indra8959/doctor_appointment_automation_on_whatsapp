@@ -24,7 +24,7 @@ def pay_link(name,number,email,id,rs,rzid,rzk):
         "sms": False,
         "email": False
     },
-    "callback_url": "https://391d-2409-40c4-219b-d909-c9ba-bff-6880-5d79.ngrok-free.app/payment_callback2/"+id+"/",
+    "callback_url": "https://care2connect.in/payment_callback2/"+id+"/",
     "callback_method": "get"
 }
 
