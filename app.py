@@ -654,13 +654,13 @@ def getindex(docter_id,tslot,date):
     return appointment_number
 
 
-# if __name__ == "__main__":
-#     app.run(port=5000,host="0.0.0.0")
-
-
-
-
-
 if __name__ == "__main__":
-    app.run(port=5000,debug=True)
+    app.run(port=5000,host="0.0.0.0")
+
+
+
+
+
+# if __name__ == "__main__":
+#     app.run(port=5000,debug=True)
 
