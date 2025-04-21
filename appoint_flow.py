@@ -113,7 +113,7 @@ def custom_book_appointment(data):
     
 
     name = appoint_data.get('patient_name')
-    pname = 'none'
+    pname = appoint_data.get('guardian_name')
     date = response_data.get('Date_of_appointment_0')
     slot = response_data.get('Time_Slot_1')
     vaccine = response_data.get('vaccine')
@@ -124,10 +124,10 @@ def custom_book_appointment(data):
     city = 'none'
     address = 'none'
 
-    if appoint_data.get('guardian_name'):
-        email = appoint_data.get('guardian_name')
+    if response_data.get('Guardian_Name'):
+        pname = response_data.get('Guardian_Name')
     else:
-        email = 'none'
+        pname = pname
 
     if appoint_data.get('email'):
         email = appoint_data.get('email')
@@ -513,12 +513,29 @@ def book_appointment(data):
 
         appoint_number = str(formatted_date)+'-'+str(data_length)
 
-        appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0})
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+
+
+
+
+        index_number = getindex(retrieved_data['doctor_phone_id'],slot,xdate)
+
+        xid = appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0,'appointment_index':index_number}).inserted_id
+
+
+        tempdata = {"number":from_number,"current_id":xid,"_id":from_number}
+        try:
+            templog.insert_one(tempdata)
+        except:
+            templog.update_one({'_id': from_number}, {'$set': tempdata})
+
+        
 
         name = str(retrieved_data['patient_name'])
         phone = str(retrieved_data['whatsapp_number'])
 
-        return success_appointment(pay_id,appoint_number,name,date,slot,phone)
+        return success_appointment(pay_id,index_number,name,date,slot,phone)
     else:
         id = str(appointment.insert_one(dataset).inserted_id)
         print(id)
@@ -1035,7 +1052,7 @@ def sendthankyou(recipientNumber):
   'messaging_product': 'whatsapp',
   'receipient_type':"individual",
   'to': recipientNumber,
-  'text':{'body':'Thankyou'},
+  'text':{'body':'Thank you'},
   'type': 'text'
     }
     response = requests.post(external_url, json=payload, headers=headers)

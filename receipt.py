@@ -3,6 +3,10 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 import requests
 
+from datetime import datetime
+
+
+
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
 db = client.get_database("caredb")
@@ -16,12 +20,27 @@ def receiptme(from_number):
     document = templog.find_one({'_id':from_number})
     appoint_data = appointment.find_one({"_id": ObjectId(document["current_id"])})
 
-    print(appoint_data)
 
     name = appoint_data.get('patient_name')
     doa = appoint_data.get('date_of_appointment')
+    date_str = doa
+    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+    dformatted_date = str(date_obj.strftime("%d-%m-%Y"))
+
+
     time = appoint_data.get('time_slot')
-    no = str(appoint_data.get('appointment_index'))
+    
+    pay_id = str(appoint_data.get('pay_id'))
+    amount = str(appoint_data.get('amount'))
+
+
+
+    timestamp = int(appoint_data.get('timestamp'))
+    date = datetime.fromtimestamp(timestamp)
+    formatted_date = date.strftime('%d-%m-%Y')
+
+
+
 
     class PDF(FPDF):
         def header(self):
@@ -35,7 +54,7 @@ def receiptme(from_number):
             self.set_xy(40, 15)  # X=40 to move right of logo, Y=15 for vertical centering
             self.set_font("Arial", "B", 16)
             self.set_text_color(255, 255, 255)  # White text
-            self.cell(0, 10, "Care2Connect", ln=True, align="L")
+            self.cell(0, 10, "", ln=True, align="L")
             self.ln(5)
 
         def add_appointment_details(self):
@@ -43,19 +62,24 @@ def receiptme(from_number):
             self.set_fill_color(25, 42, 86) 
             self.set_text_color(255, 255, 255)  # White text
             # self.rect(0, 0, 210, 125, 'F') 
-            self.set_font("Arial", "B", 14)
-            self.cell(0, 10, "Your appointment is confirmed", ln=True, fill=True)
+            self.set_font("Arial", "B", 18)
+            self.cell(0, 10, "Dr. Neeraj Bansal Child Care Centre", ln=True, fill=True , align='C')
 
             self.set_font("Arial", "", 12)
-            self.cell(0, 10, "This appointment is guaranteed by Care2Connect", ln=True, fill=True)
+            self.cell(0, 10, "Kalra Multispeciality Hospital, Opposite Street no 4, Ajit Road, Bathinda - 151001, Punjab", ln=True, fill=True, align='C')
             self.ln(10)
+
+            self.set_text_color(0, 0, 0)
+            self.set_font("Arial", "", 12)
+            self.cell(0, 10, "Your appointment is confirmed", ln=True)
+            self.ln(5)
 
             # Appointment intro
             self.set_text_color(0, 0, 0)
             self.set_font("Arial", "", 12)
             self.cell(0, 10, "Hello "+name+" ,", ln=True)
             self.ln(5)
-            self.multi_cell(0, 10, "Thanks for booking an appointment on Care2Connect. Here are the details of your appointment:")
+            self.multi_cell(0, 10, "Thanks for booking an appointment on Care2Connect. Here are the details of your transaction:")
             self.ln(5)
 
             # Appointment details table
@@ -65,37 +89,49 @@ def receiptme(from_number):
             self.cell(0, 10, "Dr. Neeraj Bansal", 1, ln=True)
 
             self.set_font("Arial", "B", 12)
-            self.cell(50, 10, "Date:", 1)
+            self.cell(50, 10, "Date of Appointment:", 1)
             self.set_font("Arial", "", 12)
-            self.cell(0, 10, doa, 1, ln=True)
+            self.cell(0, 10, dformatted_date, 1, ln=True)
+
+
 
             self.set_font("Arial", "B", 12)
-            self.cell(50, 10, "Time:", 1)
+            self.cell(50, 10, "Time Slot:", 1)
             self.set_font("Arial", "", 12)
             self.cell(0, 10, time, 1, ln=True)
 
             self.set_font("Arial", "B", 12)
-            self.cell(50, 10, "Clinic's details:", 1)
+            self.cell(50, 10, "Date of Transaction:", 1)
             self.set_font("Arial", "", 12)
-            self.cell(0, 10, "Dr. Neeraj Bansal Child Care Centre, Bathinda", 1, ln=True)
+            self.cell(0, 10,formatted_date, 1, ln=True)
+
+
+
 
             self.set_font("Arial", "B", 12)
-            self.cell(50, 10, "Phone:", 1)
+            self.cell(50, 10, "Consultation fee:", 1)
             self.set_font("Arial", "", 12)
-            self.cell(0, 10, from_number, 1, ln=True)
+            self.cell(0, 10,amount+"/-", 1, ln=True)
+
+
 
             self.set_font("Arial", "B", 12)
-            self.cell(50, 10, "Appointment No:", 1)
+            self.cell(50, 10, "Transaction ID:", 1)
             self.set_font("Arial", "", 12)
-            self.cell(0, 10, no, 1, ln=True)
+            self.cell(0, 10, pay_id, 1, ln=True)
+
+            self.set_font("Arial", "B", 12)
+            self.cell(50, 10, "Receipt No:", 1)
+            self.set_font("Arial", "", 12)
+            self.cell(0, 10, "A5", 1, ln=True)
 
             self.ln(10)
             self.set_font("Arial", "", 12)
-            self.multi_cell(0, 10, "If you are unable to make it to the appointment, please cancel or reschedule. It will open this valuable slot for others waiting to visit the doctor.")
+            self.multi_cell(0, 10, "This is a computer generated document and doesn`t require signature.")
             self.ln(5)
 
-            self.set_text_color(0, 150, 255)
-            self.cell(0, 10, "Manage your appointments better by visiting My Appointments", ln=True)
+            # self.set_text_color(0, 150, 255)
+            # self.cell(0, 10, "Manage your appointments better by visiting My Appointments", ln=True)
 
     # Generate and save the PDF
     pdf = PDF()
@@ -164,3 +200,4 @@ def receiptme(from_number):
         return "ok",200
     except Exception as e:
         return e,400
+

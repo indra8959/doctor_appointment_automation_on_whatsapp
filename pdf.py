@@ -7,6 +7,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+from reportlab.platypus import Spacer
 
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
@@ -16,6 +17,9 @@ appointment = db["appointment"]
 templog = db["logs"] 
 
 def pdfdownload(from_number,zxdate):
+    
+    date_obj = datetime.strptime(zxdate, "%Y-%m-%d")
+    formatted_date = date_obj.strftime("%d-%m-%Y")
     
     doc_id = ObjectId("67ee5e1bde4cb48c515073ee")
     document = doctors.find_one({"_id": doc_id})
@@ -111,12 +115,13 @@ def pdfdownload(from_number,zxdate):
         print_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         table.setStyle(style)
 
+        print_date = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
         styles = getSampleStyleSheet()
-        header_style = ParagraphStyle(name="HeaderStyle", fontSize=10, leading=14, spaceAfter=10)
-        header = Paragraph(f"<b>Appointment Report</b><br/><i>Printed on: {print_date}</i>", header_style)
+        header_left = Paragraph(f"<b>date of appointments: {formatted_date}</b>", ParagraphStyle(name="LeftHeader", fontSize=10))
+        header_right = Paragraph(f"<i>Printed on: {print_date}</i>", ParagraphStyle(name="RightHeader", fontSize=10, alignment=2))
+        header_table = Table([[header_left, header_right]], colWidths=[300, 240])  # Adjust if needed
 
-
-        pdf.build([header, table])
+        pdf.build([header_table, Spacer(1, 10), table])
 
   
     
@@ -287,7 +292,7 @@ def pdfdownloadcdate(from_number):
 
         styles = getSampleStyleSheet()
         header_style = ParagraphStyle(name="HeaderStyle", fontSize=10, leading=14, spaceAfter=10)
-        header = Paragraph(f"<b>Appointment Report</b><br/><i>Printed on: {print_date}</i>", header_style)
+        header = Paragraph(f"<b>date of appointments: </b><br/><i>Printed on: {print_date}</i>", header_style)
 
 
         pdf.build([header, table])

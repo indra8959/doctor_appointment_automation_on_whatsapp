@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 2.1"
+    return "updated 2.2"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -118,7 +118,8 @@ def webhook():
                     return old_user_send(from_number)
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
-                    return pdfdownloadcdate(from_number)
+                    today_date = datetime.now().strftime("%Y-%m-%d")
+                    return pdfdownload(from_number,today_date)
                 elif msg_type == 'text' and body.lower() == "receipt":
                     print(body.lower())
                     return receiptme(from_number)
@@ -653,13 +654,13 @@ def getindex(docter_id,tslot,date):
     return appointment_number
 
 
-if __name__ == "__main__":
-    app.run(port=5000,host="0.0.0.0")
-
-
-
-
-
 # if __name__ == "__main__":
-#     app.run(port=5000,debug=True)
+#     app.run(port=5000,host="0.0.0.0")
+
+
+
+
+
+if __name__ == "__main__":
+    app.run(port=5000,debug=True)
 
