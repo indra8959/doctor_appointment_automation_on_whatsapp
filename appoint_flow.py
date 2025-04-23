@@ -1143,7 +1143,7 @@ def sameordef(from_number, name):
             "type": "interactive",
             "interactive": {
                 "type": "button",
-                "body": {"text": f"We noticed that someone with the same name *{name}* has already booked an appointment./n Are you the same patient who already booked, or someone different?"},
+                "body": {"text": f"We noticed that someone with the same name *{name}* has already booked an appointment.\n Are you the same patient who already booked, or someone different?"},
                 "action": {
                     "buttons": [{"type": "reply", "reply": btn} for btn in buttons]
                 }
