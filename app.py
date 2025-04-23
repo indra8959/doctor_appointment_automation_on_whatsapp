@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 2.3"
+    return "updated 3.0"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -433,7 +433,7 @@ def payment_callback(id):
         tm = str(retrieved_data['time_slot'])
         phone = str(retrieved_data['whatsapp_number'])
 
-        whatsapp_url = success_appointment(payment_id,appoint_number,name,doa,tm,phone)
+        whatsapp_url = success_appointment(doa,appoint_number,name,doa,tm,phone)
         return redirect(whatsapp_url)
     else:
         # Payment failed or was not captured
@@ -545,7 +545,7 @@ def razorpay_webhook():
             tm = str(retrieved_data['time_slot'])
             phone = str(retrieved_data['whatsapp_number'])
 
-            whatsapp_url = success_appointment(payment_id,index_number,name,doa,tm,phone)
+            whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
             return redirect(whatsapp_url)
 
         return jsonify({'status': 'success'}), 200
@@ -613,7 +613,7 @@ def payment_callback2(id):
         print('1')
 
 
-        whatsapp_url = success_appointment(payment_id,index_number,name,doa,tm,phone)
+        whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
 
         print('1')
 

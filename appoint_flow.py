@@ -191,7 +191,7 @@ def custom_book_appointment(data):
     
     date_str = date
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
-    new_date = xdate - timedelta(days=3)
+    new_date = xdate - timedelta(days=2)
 
     
     from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -225,6 +225,8 @@ def custom_book_appointment(data):
 
         pay_id = str(retrieved_data['pay_id'])
         pay_id = "old_"+pay_id
+
+        img_date = str(retrieved_data['date_of_appointment'])
 
         appoint_number = str(formatted_date)+'-'+str(data_length)
 
@@ -269,7 +271,7 @@ def custom_book_appointment(data):
         # name = str(retrieved_data['patient_name'])
         # phone = str(retrieved_data['whatsapp_number'])
 
-        return success_appointment(pay_id,index_number,name,date,slot,phone)
+        return success_appointment(img_date,index_number,name,date,slot,phone)
     
         # doc_id = ObjectId(id)
         # retrieved_data = appointment.find_one({"_id": doc_id})
@@ -478,7 +480,7 @@ def book_appointment(data):
     
     date_str = date
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
-    new_date = xdate - timedelta(days=3)
+    new_date = xdate - timedelta(days=2)
 
     
     from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -506,7 +508,7 @@ def book_appointment(data):
         except:
             templog2.update_one({'_id': from_number}, {'$set': data})
 
-        return sameordef(from_number)
+        return sameordef(from_number,name)
 
         # retrieved_data = result[0]
         # result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
@@ -815,8 +817,10 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
     response = requests.post(url, json=payload, headers=headers)
 
     appoint_no = str(appoint_no)
+
     
-    img = generate_appointment_image(appoint_no,formatted_date,time,name)
+    
+    img = generate_appointment_image(appoint_no,formatted_date,time,name,payment_id)
     # ok = compress_to_10kb(img, output_path="img.jpg")
     
     kk = imagesend(whatsapp_no)
@@ -931,7 +935,21 @@ def draw_justified_text(draw, text_lines, font, start_x, start_y, line_width, li
         start_y += line_height
 
 
-def generate_appointment_image(number, date, time, name):
+def generate_appointment_image(number, date, time, name,c_date):
+
+
+
+    date_str =c_date
+
+# Convert string to datetime object
+    given_date = datetime.strptime(date_str, "%Y-%m-%d")
+
+# Add 3 days
+    new_date = given_date + timedelta(days=2)
+
+# Format the result back to string
+    result = new_date.strftime("%d-%m-%Y")
+
     # Load background image
     background_path = "bgdr.jpg"  # Replace with actual path to your image
     background = Image.open(background_path).convert("RGB")
@@ -972,11 +990,11 @@ def generate_appointment_image(number, date, time, name):
     # Disclaimer text (justified)
     disclaimer_points = [
         "*Disclaimer:",
-        "1. While we strive to honor all appointment times, please note that",
+        f"1. Your appointment is valid till {result} during regular",
+        "OPD hours. No consultation fee will be charged during this period.",
+        "2. While we strive to honor all appointment times, please note that",
         "there may be delays due to unforeseen emergencies or circumstances",
-        "beyond our control. We appreciate your patience and understanding.",
-        "2. Your appointment is valid till 23-04-2025 during regular",
-        "OPD hours. No consultation fee will be charged during this period."
+        "beyond our control. We appreciate your patience and understanding."
     ]
 
     try:
@@ -1105,12 +1123,12 @@ def sendthankyou(recipientNumber):
 
 
 
-def sameordef(from_number):
+def sameordef(from_number, name):
     external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     all_buttons = [
-    {"id": "Same_person", "title": "Same person"},
-    {"id": "Different_person", "title": "Different person"}
+    {"id": "Same_person", "title": "Same patient"},
+    {"id": "Different_person", "title": "Different patient"}
     ]
 
 # Function to send buttons in batches of 3
@@ -1125,7 +1143,7 @@ def sameordef(from_number):
             "type": "interactive",
             "interactive": {
                 "type": "button",
-                "body": {"text": "Are you the same person who already booked, or someone different?"},
+                "body": {"text": f"We noticed that someone with the same name *{name}* has already booked an appointment./n Are you the same patient who already booked, or someone different?"},
                 "action": {
                     "buttons": [{"type": "reply", "reply": btn} for btn in buttons]
                 }
@@ -1240,7 +1258,7 @@ def same_name(from_number,ap_type):
     
     date_str = date
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
-    new_date = xdate - timedelta(days=3)
+    new_date = xdate - timedelta(days=2)
 
     
     from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -1276,6 +1294,8 @@ def same_name(from_number,ap_type):
         pay_id = str(retrieved_data['pay_id'])
         pay_id = "old_"+pay_id
 
+        img_date = str(retrieved_data['date_of_appointment'])
+
         appoint_number = str(formatted_date)+'-'+str(data_length)
 
         dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
@@ -1301,7 +1321,7 @@ def same_name(from_number,ap_type):
         name = str(retrieved_data['patient_name'])
         phone = str(retrieved_data['whatsapp_number'])
 
-        return success_appointment(pay_id,index_number,name,date,slot,phone)
+        return success_appointment(img_date,index_number,name,date,slot,phone)
     else:
         id = str(appointment.insert_one(dataset).inserted_id)
         print(id)
