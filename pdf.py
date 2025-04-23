@@ -8,6 +8,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from reportlab.platypus import Spacer
+from zoneinfo import ZoneInfo
 
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
@@ -112,12 +113,12 @@ def pdfdownload(from_number,zxdate):
     ('BACKGROUND', (0, 1), (-1, -1), colors.white),
     ('GRID', (0, 0), (-1, -1), 1, colors.black)
         ])
-        print_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")
         table.setStyle(style)
 
-        print_date = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+        print_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d-%m-%Y %H:%M:%S")
         styles = getSampleStyleSheet()
-        header_left = Paragraph(f"<b>date of appointments: {formatted_date}</b>", ParagraphStyle(name="LeftHeader", fontSize=10))
+        header_left = Paragraph(f"<b>List of Appointments Dated : {formatted_date}</b>", ParagraphStyle(name="LeftHeader", fontSize=10))
         header_right = Paragraph(f"<i>Printed on: {print_date}</i>", ParagraphStyle(name="RightHeader", fontSize=10, alignment=2))
         header_table = Table([[header_left, header_right]], colWidths=[300, 240])  # Adjust if needed
 

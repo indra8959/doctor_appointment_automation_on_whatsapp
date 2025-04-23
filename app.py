@@ -6,7 +6,7 @@ import time
 import json
 # import datetime
 from receipt import receiptme
-from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow
+from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 2.2"
+    return "updated 2.3"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -94,6 +94,10 @@ def webhook():
                         return receiptme(from_number)
                     elif button_id == "no":
                         return sendthankyou(from_number)
+                    elif button_id == "Same_person":
+                        return same_name(from_number,'same')
+                    elif button_id == "Different_person":
+                        return same_name(from_number,'deff')
                     elif checktext(button_id) == "appoint_id":
                         match = re.match(r"(appoint_id)([a-f0-9]+)", button_id)
                         value = match.group(2)

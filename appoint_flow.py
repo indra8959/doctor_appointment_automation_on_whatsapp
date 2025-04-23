@@ -10,6 +10,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 
+
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
 db = client.get_database("caredb")
@@ -17,6 +18,7 @@ doctors = db["doctors"]
 appointment = db["appointment"] 
 templog = db["logs"] 
 admin = db["admin"] 
+templog2 = db["tempdata"]
 
 headers={'Authorization': 'Bearer EACHqNPEWKbkBOZBGDB1NEzQyDEsZAUcJwBMdopvDDWrS9JNRsWe1YAHc6C5k4pCQlJvScAX7URYSFE4wvMXlh7x9Uf6fwbccvQqceRxHxJFJLZC7szcNaSZCr9pJWE8g5S8SZCaNxRbMZA6dQNZBVaQzBtZBQJ4TNZAoZBuyZBjyVJDOOSKmSSsdqhFRKLUS6fm28zwKA7GhNsclSZAJtjQWTBWfzw5bOS2Fp53qqujNwm9f','Content-Type': 'application/json'}
 phone_id = '563776386825270'
@@ -498,44 +500,53 @@ def book_appointment(data):
     }).sort("date_of_appointment", -1).limit(1)) 
 
     if len(result)>0:
-        retrieved_data = result[0]
-        result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
-        data_length = 1
-        if result:
-            data_length = len(result)+1
 
-        xdate = date
-        date_obj = datetime.strptime(xdate, "%Y-%m-%d")
-        formatted_date = date_obj.strftime("%Y%m%d")
-
-        pay_id = str(retrieved_data['pay_id'])
-        pay_id = "old_"+pay_id
-
-        appoint_number = str(formatted_date)+'-'+str(data_length)
-
-        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
-        fee = float(dxxocument.get('appointmentfee'))
-
-
-
-
-        index_number = getindex(retrieved_data['doctor_phone_id'],slot,xdate)
-
-        xid = appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0,'appointment_index':index_number}).inserted_id
-
-
-        tempdata = {"number":from_number,"current_id":xid,"_id":from_number}
         try:
-            templog.insert_one(tempdata)
+            templog2.insert_one({**data,'_id': from_number})
         except:
-            templog.update_one({'_id': from_number}, {'$set': tempdata})
+            templog2.update_one({'_id': from_number}, {'$set': data})
+
+        return sameordef(from_number)
+
+        # retrieved_data = result[0]
+        # result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+        # data_length = 1
+        # if result:
+        #     data_length = len(result)+1
+
+        # xdate = date
+        # date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+        # formatted_date = date_obj.strftime("%Y%m%d")
+
+        # pay_id = str(retrieved_data['pay_id'])
+        # pay_id = "old_"+pay_id
+
+        # appoint_number = str(formatted_date)+'-'+str(data_length)
+
+        # dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        # fee = float(dxxocument.get('appointmentfee'))
+
+
+
+
+        # index_number = getindex(retrieved_data['doctor_phone_id'],slot,xdate)
+
+
+        # xid = appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0,'appointment_index':index_number}).inserted_id
+
+
+        # tempdata = {"number":from_number,"current_id":xid,"_id":from_number}
+        # try:
+        #     templog.insert_one(tempdata)
+        # except:
+        #     templog.update_one({'_id': from_number}, {'$set': tempdata})
 
         
 
-        name = str(retrieved_data['patient_name'])
-        phone = str(retrieved_data['whatsapp_number'])
+        # name = str(retrieved_data['patient_name'])
+        # phone = str(retrieved_data['whatsapp_number'])
 
-        return success_appointment(pay_id,index_number,name,date,slot,phone)
+        # return success_appointment(pay_id,index_number,name,date,slot,phone)
     else:
         id = str(appointment.insert_one(dataset).inserted_id)
         print(id)
@@ -562,6 +573,9 @@ def book_appointment(data):
         print(link)
         amount = fee
         return send_payment_flow(from_number,name,date,slot,amount,link)
+    
+
+
 
 
 def custom_appointment_flow(from_number):
@@ -672,7 +686,7 @@ def call_external_post_api(from_number):
         return "OK", 200
     
 
-def start_automation(from_number,):
+def start_automation(from_number):
     external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
     all_buttons = [
@@ -895,9 +909,31 @@ def imagesend(whatsapp_no):
 
     return "OK", 200
 
+def draw_justified_text(draw, text_lines, font, start_x, start_y, line_width, line_height, fill="black"):
+    for line in text_lines:
+        words = line.strip().split()
+        if not words:
+            start_y += line_height
+            continue
+
+        # Measure total width of words without spaces
+        total_words_width = sum(draw.textlength(word, font=font) for word in words)
+        total_spaces = len(words) - 1
+        if total_spaces > 0:
+            space_width = (line_width - total_words_width) / total_spaces
+        else:
+            space_width = 0
+
+        x = start_x
+        for i, word in enumerate(words):
+            draw.text((x, start_y), word, font=font, fill=fill)
+            x += draw.textlength(word, font=font) + (space_width if i < total_spaces else 0)
+        start_y += line_height
+
+
 def generate_appointment_image(number, date, time, name):
     # Load background image
-    background_path = "bgdr.jpg"  # Replace with actual path
+    background_path = "bgdr.jpg"  # Replace with actual path to your image
     background = Image.open(background_path).convert("RGB")
     background = background.resize((800, 800))
 
@@ -913,15 +949,10 @@ def generate_appointment_image(number, date, time, name):
         {"text": "Time - " + time, "font_size": int(36 * scale), "y_offset": int(520 * scale)},
     ]
 
-    disclaimer_text = (
-        "*Disclaimer :\n"
-        "While we strive to honor all appointment times, "
-        "please note that there may be delays due to unforeseen emergencies "
-        "or circumstances beyond our control. We appreciate your patience and understanding."
-    )
-
+    # Font path (Ensure the font file exists or change to a system font path)
     bold_font_path = "pt.ttf"
 
+    # Draw main text items
     for item in texts:
         text = item["text"]
         font_size = item["font_size"]
@@ -938,31 +969,41 @@ def generate_appointment_image(number, date, time, name):
         x = (background.width - text_width) / 2
         draw.text((x, y_offset), text, font=font, fill=color)
 
-    # Draw disclaimer
+    # Disclaimer text (justified)
+    disclaimer_points = [
+        "*Disclaimer:",
+        "1. While we strive to honor all appointment times, please note that",
+        "there may be delays due to unforeseen emergencies or circumstances",
+        "beyond our control. We appreciate your patience and understanding.",
+        "2. Your appointment is valid till 23-04-2025 during regular",
+        "OPD hours. No consultation fee will be charged during this period."
+    ]
+
     try:
         disclaimer_font = ImageFont.truetype(bold_font_path, 24)
     except OSError:
         disclaimer_font = ImageFont.load_default()
 
-    # Wrap disclaimer text
-    import textwrap
-    wrapped_disclaimer = textwrap.fill(disclaimer_text, width=60)
+    # Calculate bottom margin positioning
+    line_height = 30
+    total_lines = len(disclaimer_points)
+    total_disclaimer_height = total_lines * line_height
+    start_y = 800 - 20 - total_disclaimer_height  # Ensure 20px bottom margin
 
-    # Positioning near bottom
-    draw.multiline_text(
-        (40, 620),
-        wrapped_disclaimer,
+    draw_justified_text(
+        draw=draw,
+        text_lines=disclaimer_points,
         font=disclaimer_font,
-        fill="black",
-        align="left",
-        spacing=10
+        start_x=40,
+        start_y=start_y,
+        line_width=720,  # 800 width minus 2*40 padding
+        line_height=line_height,
+        fill="black"
     )
 
+    # Save the image
     background.save("img.jpg")
-
     return background
-
-
 
 # def compress_to_10kb(image, output_path="img.jpg", target_kb=20):
 #     quality = 95
@@ -1010,7 +1051,7 @@ def old_user_send(from_number):
             "title": display_name
                 })
 
-    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "Book New Appointment"}]
+    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "New Patient"}]
 
 # Function to send buttons in batches of 3
     def send_whatsapp_buttons(to_number, buttons_list):
@@ -1034,6 +1075,7 @@ def old_user_send(from_number):
         }
 
             response = requests.post(external_url, headers=headers, json=payload)
+
        
          
 
@@ -1052,7 +1094,7 @@ def sendthankyou(recipientNumber):
   'messaging_product': 'whatsapp',
   'receipient_type':"individual",
   'to': recipientNumber,
-  'text':{'body':'Thank you'},
+  'text':{'body':'Thank You & Have a Good Day'},
   'type': 'text'
     }
     response = requests.post(external_url, json=payload, headers=headers)
@@ -1060,3 +1102,232 @@ def sendthankyou(recipientNumber):
     print(response)
 
     return "OK", 200
+
+
+
+def sameordef(from_number):
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+
+    all_buttons = [
+    {"id": "Same_person", "title": "Same person"},
+    {"id": "Different_person", "title": "Different person"}
+    ]
+
+# Function to send buttons in batches of 3
+    def send_whatsapp_buttons(to_number, buttons_list):
+        for i in range(0, len(buttons_list), 3):  # Send in groups of 3
+            buttons = buttons_list[i:i+3]  # Get 3 buttons at a time
+
+            payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to_number,
+            "type": "interactive",
+            "interactive": {
+                "type": "button",
+                "body": {"text": "Are you the same person who already booked, or someone different?"},
+                "action": {
+                    "buttons": [{"type": "reply", "reply": btn} for btn in buttons]
+                }
+            }
+        }
+
+            response = requests.post(external_url, headers=headers, json=payload)
+       
+         
+
+# Send multiple messages with 3 buttons per message
+    send_whatsapp_buttons(from_number, all_buttons)
+
+    # response = requests.post(external_url, json=payloadx, headers={'Authorization': 'Bearer EAAJdr829Xj4BOxyhp8MzkQqZCr92HwzYQMyDjZBhWZBqUej9YnYqTBefwyGeIZAUOhSk3y9AspLT69frxyYsWb6ea7jAGP4xm3BCxkAF5SXMqLeY3SpYt5AUUi0CkUIhk8AC6S1H6TIr0RLQHf3Tfo6ZBblcMZCBoc81nqVTidywfSK4FoWZAZCXenHHqRr5wAtE5D2tIGf87f8B7wuXUcWyK77Wca1ZBR3tqxQMOkK6L6BUZD','Content-Type': 'application/json'})
+    # print(jsonify(response.json()))
+    return "OK", 200
+
+
+
+def same_name(from_number,ap_type):
+
+    data = templog2.find_one({'_id':from_number})
+
+    entry = data.get('entry', [])[0]  # Extract first entry
+    changes = entry.get('changes', [])[0]  # Extract first change
+    value = changes.get('value', {})
+
+    message_info = value.get('messages', [])[0] 
+    response_json_str = data['entry'][0]['changes'][0]['value']['messages'][0]['interactive']['nfm_reply']['response_json']
+    response_data = json.loads(response_json_str)
+    print(response_data)
+
+    if response_data.get('role')=='personal_flow':
+        return custom_book_appointment(data)
+
+    name = response_data.get('Patient_Name_2')
+    pname = 'none'
+    date = response_data.get('Date_of_appointment_0')
+    slot = response_data.get('Time_Slot_1')
+    vaccine = response_data.get('vaccine')
+
+    email = 'none'
+    symptoms = 'none'
+    age = 'none'
+    dob = 'none'
+    city = 'none'
+    address = 'none'
+
+    if response_data.get('Guardian_Name'):
+        pname = response_data.get('Guardian_Name')
+    else:
+        pname = 'none'
+
+
+    if response_data.get('Email_4'):
+        email = response_data.get('Email_4')
+    else:
+        email = 'none'
+
+    if response_data.get('Other_Symptoms_5'):
+        symptoms = response_data.get('Other_Symptoms_5')
+    else:
+        symptoms = 'none'
+
+    if response_data.get('Age_3'):
+        age = response_data.get('Age_3')
+    else:
+        age = 'none'
+
+    if response_data.get('Date_Of_Birth'):
+        dob = response_data.get('Date_Of_Birth')
+    else:
+        dob = 'none'
+
+    if response_data.get('City'):
+        city = response_data.get('City')
+    else:
+        city = 'none'
+
+    if response_data.get('Address'):
+        address = response_data.get('Address')
+    else:
+        address = 'none'
+
+    from_number = message_info.get('from')
+    timestamp = message_info.get('timestamp')
+
+    doctor_id = '67ee5e1bde4cb48c515073ee'
+
+    # result = list(doctors.find({"doctor_phone_id": doctor_id}, {"_id": 0}))  # Convert cursor to list
+    # data_length = len(result)
+
+    dataset = {
+        'patient_name': name,
+        'guardian_name': pname,
+        'date_of_appointment': date,
+        'time_slot': slot,
+        'doctor_phone_id':doctor_id,
+        'email' : email,
+        'symptoms' : symptoms,
+        'age' : age,
+        'timestamp' : timestamp,
+        'whatsapp_number' : from_number,
+        'date_of_birth' : dob,
+        'city' : city,
+        'address' : address,
+        'role':'appointment',
+        'status':'created',
+        "createdAt": 'x',
+        "vaccine":vaccine
+            }
+    
+    date_str = date
+    xdate = datetime.strptime(date_str, "%Y-%m-%d")
+    new_date = xdate - timedelta(days=3)
+
+    
+    from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
+    todate = datetime.strptime(date_str, "%Y-%m-%d")
+    todate = todate.replace(hour=23, minute=59, second=59)  # Ensure full-day inclusion
+
+# Query with date filtering (Convert date_of_appointment to datetime in query)
+    result = list(appointment.find({
+    "whatsapp_number": from_number,
+    "patient_name": name,
+    "doctor_phone_id": doctor_id,
+    "amount":{"$gt": 0},
+    "$expr": {
+        "$and": [
+            {"$gte": [{"$dateFromString": {"dateString": "$date_of_appointment"}}, from_date]},
+            {"$lte": [{"$dateFromString": {"dateString": "$date_of_appointment"}}, todate]}
+        ]
+    }
+    }).sort("date_of_appointment", -1).limit(1)) 
+
+    if len(result)>0 and ap_type=='same':
+
+        retrieved_data = result[0]
+        result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+        data_length = 1
+        if result:
+            data_length = len(result)+1
+
+        xdate = date
+        date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+        formatted_date = date_obj.strftime("%Y%m%d")
+
+        pay_id = str(retrieved_data['pay_id'])
+        pay_id = "old_"+pay_id
+
+        appoint_number = str(formatted_date)+'-'+str(data_length)
+
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+
+
+
+
+        index_number = getindex(retrieved_data['doctor_phone_id'],slot,xdate)
+
+
+        xid = appointment.insert_one({**dataset,'status':'success','pay_id':pay_id,'appoint_number':appoint_number,'amount':0,'appointment_index':index_number}).inserted_id
+
+
+        tempdata = {"number":from_number,"current_id":xid,"_id":from_number}
+        try:
+            templog.insert_one(tempdata)
+        except:
+            templog.update_one({'_id': from_number}, {'$set': tempdata})
+
+        
+
+        name = str(retrieved_data['patient_name'])
+        phone = str(retrieved_data['whatsapp_number'])
+
+        return success_appointment(pay_id,index_number,name,date,slot,phone)
+    else:
+        id = str(appointment.insert_one(dataset).inserted_id)
+        print(id)
+
+        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        fee = float(dxxocument.get('appointmentfee'))
+        # paymentlink = dxxocument.get('paymentlink')
+
+        tempdata = {"number":from_number,"current_id":id,"_id":from_number}
+        try:
+            templog.insert_one(tempdata)
+        except:
+            templog.update_one({'_id': from_number}, {'$set': tempdata})
+
+        dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
+        razorpayid = dxocument.get('razorpayid')
+        razorpaykey = dxocument.get('razorpaykey')
+
+
+        link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
+
+
+        # link = paymentlink
+        print(link)
+        amount = fee
+        return send_payment_flow(from_number,name,date,slot,amount,link)
+    
+
+
