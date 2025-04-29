@@ -20,6 +20,8 @@ def receiptme(from_number):
     document = templog.find_one({'_id':from_number})
     appoint_data = appointment.find_one({"_id": ObjectId(document["current_id"])})
 
+    R_number = appointment.count_documents({"doctor_phone_id":'67ee5e1bde4cb48c515073ee',"amount":{"$gt": -1}})
+
 
     name = appoint_data.get('patient_name')
     doa = appoint_data.get('date_of_appointment')
@@ -123,7 +125,7 @@ def receiptme(from_number):
             self.set_font("Arial", "B", 12)
             self.cell(50, 10, "Receipt No:", 1)
             self.set_font("Arial", "", 12)
-            self.cell(0, 10, "A5", 1, ln=True)
+            self.cell(0, 10, "A"+str(R_number+1), 1, ln=True)
 
             self.ln(10)
             self.set_font("Arial", "", 12)
@@ -140,7 +142,7 @@ def receiptme(from_number):
     pdf.output("receipt.pdf")
 
     try:
-        WHATSAPP_ACCESS_TOKEN = "EACHqNPEWKbkBOZBGDB1NEzQyDEsZAUcJwBMdopvDDWrS9JNRsWe1YAHc6C5k4pCQlJvScAX7URYSFE4wvMXlh7x9Uf6fwbccvQqceRxHxJFJLZC7szcNaSZCr9pJWE8g5S8SZCaNxRbMZA6dQNZBVaQzBtZBQJ4TNZAoZBuyZBjyVJDOOSKmSSsdqhFRKLUS6fm28zwKA7GhNsclSZAJtjQWTBWfzw5bOS2Fp53qqujNwm9f"
+        WHATSAPP_ACCESS_TOKEN = "EACHqNPEWKbkBO33utbtE1EMW5T1B8KlYqSpLDepuZCdrEY9unIfGmwnlZB4XgfEFQw2ohjGAAoBL1OHY08kftSW0ZBEvX5eXIodrY2gghys3IEoyoKwZCvHh0ZBd7I6eB9ttTEV1fsghWvpzycfIr5pIVIeftLpO0jlFLp9FZB31dd48QZCzmYSxSvKuIFkZAOlchwZDZD"
         PDF_FILE_PATH = 'receipt.pdf'
 
         PHONE_NUMBER_ID = "563776386825270"
