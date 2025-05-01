@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 from pdf import pdfdownload,pdfdownloadcdate
 from date_and_slots import dateandtime
-
+from zoneinfo import ZoneInfo
 import hmac
 import hashlib
 import json
@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 3.2"
+    return "updated 3.3"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -122,7 +122,7 @@ def webhook():
                     return old_user_send(from_number)
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
-                    today_date = datetime.now().strftime("%Y-%m-%d")
+                    today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
                     return pdfdownload(from_number,today_date)
                 elif msg_type == 'text' and body.lower() == "receipt":
                     print(body.lower())
