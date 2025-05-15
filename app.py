@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 3.3"
+    return "updated 3.4"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -347,6 +347,11 @@ def login():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+
+@app.route("/pdf/<string:id>/<string:date>/", methods=["GET"])
+def get_pdf_admin(id,date):
+    return pdfdownload(id,date)  # Exclude MongoDB's default _id field
 
 
 # Get Users (GET)
