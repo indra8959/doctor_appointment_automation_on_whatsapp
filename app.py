@@ -6,7 +6,7 @@ import time
 import json
 # import datetime
 from receipt import receiptme
-from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name
+from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name,send_selection,send_selection_enroll
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 3.4"
+    return "updated 3.5"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -53,6 +53,7 @@ def checktext(text):
         return value
     else:
         return 0
+
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -90,6 +91,10 @@ def webhook():
                     print(button_id)
                     if button_id == "book_appointment":
                         return appointment_flow(from_number)
+                    if button_id == "Re-Appointment":
+                        return send_selection(from_number)
+                    if button_id == "enrole-patient":
+                        return send_selection_enroll(from_number)
                     elif button_id == "Receipt":
                         return receiptme(from_number)
                     elif button_id == "no":
@@ -114,12 +119,31 @@ def webhook():
                         return book_appointment(data)
                     except Exception as e:
                         return "Invalid message type", 400
+                elif msg_type == 'interactive' and "list_reply" in message_info.get('interactive', {}):
+                    try:
+                        stt = message_info.get('interactive', {})
+                        value = stt['list_reply']['id']
+                        tempdata = {"number":from_number,"id_value":value,"role":"custom_appointment","_id":from_number}
+                        try:
+                            templog.insert_one(tempdata)
+                        except:
+                            templog.update_one({'_id': from_number}, {'$set': tempdata})
+                        return custom_appointment_flow(from_number)
+                    except Exception as e:
+                        return "Invalid message type", 400
                 elif msg_type == 'text' and body.lower() == "hii":
                     print(body.lower())
                     return old_user_send(from_number)
-                elif msg_type == 'text' and body.lower() == "hi":
+                elif msg_type == 'text' and body.lower() == "st":
                     print(body.lower())
-                    return old_user_send(from_number)
+                    return send_selection_enroll(from_number)
+                elif msg_type == 'text' and body.lower() == "hi":
+                    appointment_flow(from_number)
+                    send_selection_enroll(from_number)
+                    send_selection(from_number)
+                    print(body.lower())
+                    # return old_user_send(from_number)
+                    return "ok",200
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
                     today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
@@ -559,7 +583,7 @@ def razorpay_webhook():
         print("⚠️ Exception:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
+# 
 
 @app.route('/payment_callback2/<string:id>/', methods=['GET', 'POST'])
 def payment_callback2(id):
@@ -665,6 +689,7 @@ def getindex(docter_id,tslot,date):
 
 if __name__ == "__main__":
     app.run(port=5000,host="0.0.0.0")
+
 
 
 

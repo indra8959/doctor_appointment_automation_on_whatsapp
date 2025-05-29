@@ -9,7 +9,7 @@ from razorpay import pay_link
 import os
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-
+from zoneinfo import ZoneInfo
 
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
@@ -1058,18 +1058,18 @@ def old_user_send(from_number):
     if len(result)<1:
         return appointment_flow(from_number)
 
-    for record in result:
-        patient_name = record.get("patient_name")
-        display_name = (patient_name[:15] + "...") if len(patient_name) > 10 else patient_name
-        if patient_name and patient_name not in unique_patients:
-            unique_patients[patient_name] = True
+    # for record in result:
+    #     patient_name = record.get("patient_name")
+    #     display_name = (patient_name[:15] + "...") if len(patient_name) > 10 else patient_name
+    #     if patient_name and patient_name not in unique_patients:
+    #         unique_patients[patient_name] = True
         
-            latest_appointments.append({
-            "id": "appoint_id"+str(record["_id"]) if "_id" in record else "",  # Handle missing _id
-            "title": display_name
-                })
+    #         latest_appointments.append({
+    #         "id": "appoint_id"+str(record["_id"]) if "_id" in record else "",  # Handle missing _id
+    #         "title": display_name
+    #             })
 
-    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "New Patient"}]
+    all_buttons = latest_appointments + [{"id": "book_appointment", "title": "New Patient"},{"id": "enrole-patient", "title": "Enrole Patient"},{"id": "Re-Appointment", "title": "Re-Appointment"}]
 
 # Function to send buttons in batches of 3
     def send_whatsapp_buttons(to_number, buttons_list):
@@ -1085,7 +1085,7 @@ def old_user_send(from_number):
             "type": "interactive",
             "interactive": {
                 "type": "button",
-                "body": {"text": "Choose Patient`s Name:"},
+                "body": {"text": "Choose Option:"},
                 "action": {
                     "buttons": [{"type": "reply", "reply": btn} for btn in last_three_buttons]
                 }
@@ -1100,6 +1100,7 @@ def old_user_send(from_number):
 # Send multiple messages with 3 buttons per message
     send_whatsapp_buttons(from_number, all_buttons)
 
+    
     # response = requests.post(external_url, json=payloadx, headers={'Authorization': 'Bearer EAAJdr829Xj4BOxyhp8MzkQqZCr92HwzYQMyDjZBhWZBqUej9YnYqTBefwyGeIZAUOhSk3y9AspLT69frxyYsWb6ea7jAGP4xm3BCxkAF5SXMqLeY3SpYt5AUUi0CkUIhk8AC6S1H6TIr0RLQHf3Tfo6ZBblcMZCBoc81nqVTidywfSK4FoWZAZCXenHHqRr5wAtE5D2tIGf87f8B7wuXUcWyK77Wca1ZBR3tqxQMOkK6L6BUZD','Content-Type': 'application/json'})
     # print(jsonify(response.json()))
     return "OK", 200
@@ -1351,3 +1352,158 @@ def same_name(from_number,ap_type):
     
 
 
+def send_selection(from_number):
+
+    doctor_id = '67ee5e1bde4cb48c515073ee'
+
+    # date_str = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+    date_str = '2025-05-30'
+    xdate = datetime.strptime(date_str, "%Y-%m-%d")
+    new_date = xdate - timedelta(days=2)
+
+    
+    from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
+    todate = datetime.strptime(date_str, "%Y-%m-%d")
+    todate = todate.replace(hour=23, minute=59, second=59)  # Ensure full-day inclusion
+
+    print(from_date,todate)
+
+# Query with date filtering (Convert date_of_appointment to datetime in query)
+    result = list(appointment.find({
+    "whatsapp_number": from_number,
+    # "patient_name": name,
+    "doctor_phone_id": doctor_id,
+    "amount":{"$gt": 0},
+    "$expr": {
+        "$and": [
+            {"$gte": [{"$dateFromString": {"dateString": "$date_of_appointment"}}, from_date]},
+            {"$lte": [{"$dateFromString": {"dateString": "$date_of_appointment"}}, todate]}
+        ]
+    }
+    }).sort("date_of_appointment", -1).limit(10))
+
+    print(result)
+
+    def dateme(date):
+        original_date = datetime.strptime(date, "%Y-%m-%d")
+        new_date = original_date + timedelta(days=2)
+        formatted_date = new_date.strftime("%d-%m-%Y")
+        return formatted_date
+
+    rows = [
+    {
+        "id": str(app["_id"]),
+        "title": app["patient_name"],
+        "description": 'Appointment Valid to '+dateme(app["date_of_appointment"]),
+    }
+    for app in result
+]
+
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+
+    incoming_data = {
+  "messaging_product": "whatsapp",
+  "recipient_type": "individual",
+  "to": from_number,
+  "type": "interactive",
+  "interactive": {
+    "type": "list",
+    "header": {
+      "type": "text",
+      "text": ""
+    },
+    "body": {
+      "text": "Re-Appointment"
+    },
+    # "footer": {
+    #   "text": "Powered by WhatsApp Cloud API"
+    # },
+    "action": {
+      "button": "Valid Appointment",
+      "sections": [
+        {
+          "title": "Options",
+          "rows": rows
+        }
+      ]
+    }
+  }
+}
+
+
+
+    response = requests.post(external_url, json=incoming_data, headers=headers)
+    return "OK", 200
+
+
+
+def send_selection_enroll(from_number):
+
+    result = list(appointment.find({"whatsapp_number": from_number}))
+# Store only the latest appointment per patient
+    unique_patients = {}
+    latest_appointments = []
+
+    # if len(result)<1:
+    #     return appointment_flow(from_number)
+
+    for record in result:
+        patient_name = record.get("patient_name")
+        display_name = (patient_name[:15] + "...") if len(patient_name) > 10 else patient_name
+        if patient_name and patient_name not in unique_patients:
+            unique_patients[patient_name] = True
+            
+
+            latest_appointments.append({
+            "id": str(record["_id"]) if "_id" in record else "",  # Handle missing _id
+            "title": display_name,
+            "father":str(record["guardian_name"])
+                })
+
+    # all_buttons = latest_appointments + [{"id": "book_appointment", "title": "New Patient"},{"id": "enrole-patient", "title": "Enrole Patient"},{"id": "Re-Appointment", "title": "Re-Appointment"}]
+
+
+    rows = [
+    {
+        "id": str(app["id"]),
+        "title": app["title"],
+        "description": 'S/o '+app["father"],
+    }
+    for app in latest_appointments[-10:]
+]
+
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+
+    incoming_data = {
+  "messaging_product": "whatsapp",
+  "recipient_type": "individual",
+  "to": from_number,
+  "type": "interactive",
+  "interactive": {
+    "type": "list",
+    "header": {
+      "type": "text",
+      "text": ""
+    },
+    "body": {
+      "text": "Book for Already Enrolled Patient"
+    },
+    # "footer": {
+    #   "text": "Powered by WhatsApp Cloud API"
+    # },
+    "action": {
+      "button": "Choose Patient",
+      "sections": [
+        {
+          "title": "Options",
+          "rows": rows
+        }
+      ]
+    }
+  }
+}
+
+
+
+    response = requests.post(external_url, json=incoming_data, headers=headers)
+    return "OK", 200
