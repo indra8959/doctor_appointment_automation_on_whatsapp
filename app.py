@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 3.6"
+    return "updated 3.7"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
