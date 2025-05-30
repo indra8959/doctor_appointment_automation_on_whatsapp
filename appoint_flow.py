@@ -1397,7 +1397,7 @@ def send_selection(from_number):
         "description": 'Appointment Valid to '+dateme(app["date_of_appointment"]),
     }
     for app in result
-]
+    ]
 
     external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
@@ -1419,7 +1419,7 @@ def send_selection(from_number):
     #   "text": "Powered by WhatsApp Cloud API"
     # },
     "action": {
-      "button": "Valid Appointment",
+      "button": "Active Appointments",
       "sections": [
         {
           "title": "Options",
@@ -1429,8 +1429,6 @@ def send_selection(from_number):
     }
   }
 }
-
-
 
     response = requests.post(external_url, json=incoming_data, headers=headers)
     return "OK", 200
@@ -1486,7 +1484,7 @@ def send_selection_enroll(from_number):
       "text": ""
     },
     "body": {
-      "text": "Book for Already Enrolled Patient"
+      "text": "Book Appointment – Existing Patients"
     },
     # "footer": {
     #   "text": "Powered by WhatsApp Cloud API"
@@ -1503,7 +1501,7 @@ def send_selection_enroll(from_number):
   }
 }
 
-
-
     response = requests.post(external_url, json=incoming_data, headers=headers)
     return "OK", 200
+
+

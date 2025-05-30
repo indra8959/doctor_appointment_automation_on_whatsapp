@@ -38,7 +38,7 @@ API_KEY = "1234"
 # Home Route
 @app.route("/")
 def home():
-    return "updated 3.5"
+    return "updated 3.6"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -685,6 +685,7 @@ def getindex(docter_id,tslot,date):
     appointment_number = total_length-data_length-1
     print(appointment_number)
     return appointment_number
+
 
 
 if __name__ == "__main__":
