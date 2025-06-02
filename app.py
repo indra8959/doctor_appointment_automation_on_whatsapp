@@ -37,11 +37,11 @@ API_KEY = "1234"
 # print(dateandtime(f'2025-03-23'))
 
 # Home Route
-
+# 8128265003 doctor number
 def scheduled_task():
     today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
     pdfdownload('916265578975',today_date)
-    pdfdownload('918765487654',today_date)
+    pdfdownload('918128265003',today_date)
     # print(f"Task running at {datetime.now()}")
 
 # Setup scheduler
@@ -57,7 +57,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 3.8"
+    return "updated 3.9"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -166,7 +166,7 @@ def webhook():
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
                     today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
-                    if from_number=="916265578975" or from_number=="918765487654":
+                    if from_number=="916265578975" or from_number=="918128265003":
                         return pdfdownload(from_number,today_date)
                     else:
                         return "ok",200
@@ -184,7 +184,7 @@ def webhook():
                         formatted_date = datetime.strptime(extracted_date, "%d-%m-%Y").strftime("%Y-%m-%d")
     
                         print(formatted_date)
-                    if from_number=="916265578975" or from_number=="918765487654":
+                    if from_number=="916265578975" or from_number=="918128265003":
                         return pdfdownload(from_number,formatted_date)
                     else:
                         return "ok",200
