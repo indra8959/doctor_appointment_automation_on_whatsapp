@@ -1356,8 +1356,8 @@ def send_selection(from_number):
 
     doctor_id = '67ee5e1bde4cb48c515073ee'
 
-    # date_str = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
-    date_str = '2025-05-30'
+    date_str = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+    # date_str = '2025-05-30'
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
     new_date = xdate - timedelta(days=2)
 
