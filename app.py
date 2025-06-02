@@ -16,6 +16,7 @@ from zoneinfo import ZoneInfo
 import hmac
 import hashlib
 import json
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
 app = Flask(__name__)
@@ -36,9 +37,27 @@ API_KEY = "1234"
 # print(dateandtime(f'2025-03-23'))
 
 # Home Route
+
+def scheduled_task():
+    today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+    pdfdownload('916265578975',today_date)
+    pdfdownload('918765487654',today_date)
+    # print(f"Task running at {datetime.now()}")
+
+# Setup scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=scheduled_task, trigger="cron", hour=8, minute=30)
+scheduler.start()
+
+# Clean shutdown
+import atexit
+atexit.register(lambda: scheduler.shutdown())
+
+
+
 @app.route("/")
 def home():
-    return "updated 3.7"
+    return "updated 3.8"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -147,7 +166,10 @@ def webhook():
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
                     today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
-                    return pdfdownload(from_number,today_date)
+                    if from_number=="916265578975" or from_number=="918765487654":
+                        return pdfdownload(from_number,today_date)
+                    else:
+                        return "ok",200
                 elif msg_type == 'text' and body.lower() == "receipt":
                     print(body.lower())
                     return receiptme(from_number)
@@ -162,8 +184,10 @@ def webhook():
                         formatted_date = datetime.strptime(extracted_date, "%d-%m-%Y").strftime("%Y-%m-%d")
     
                         print(formatted_date)
-
-                    return pdfdownload(from_number,formatted_date)
+                    if from_number=="916265578975" or from_number=="918765487654":
+                        return pdfdownload(from_number,formatted_date)
+                    else:
+                        return "ok",200
                 else:
                     print(body.lower())
                     return "Invalid message type", 400
@@ -583,7 +607,7 @@ def razorpay_webhook():
         print("⚠️ Exception:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# 
+
 
 @app.route('/payment_callback2/<string:id>/', methods=['GET', 'POST'])
 def payment_callback2(id):
@@ -688,11 +712,10 @@ def getindex(docter_id,tslot,date):
 
 
 
+
+
 if __name__ == "__main__":
     app.run(port=5000,host="0.0.0.0")
-
-
-
 
 
 
