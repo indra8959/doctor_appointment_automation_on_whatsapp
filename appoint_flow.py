@@ -32,7 +32,7 @@ phone_id = '563776386825270'
 
 #         date_str = fdate
 #         date = datetime.strptime(date_str, "%Y-%m-%d")
-#         new_date = date - timedelta(days=2)
+#         new_date = date - timedelta(days=3)
 
 #         print(new_date.strftime("%Y-%m-%d"))
 
@@ -191,7 +191,7 @@ def custom_book_appointment(data):
     
     date_str = date
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
-    new_date = xdate - timedelta(days=2)
+    new_date = xdate - timedelta(days=3)
 
     
     from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -480,7 +480,7 @@ def book_appointment(data):
     
     date_str = date
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
-    new_date = xdate - timedelta(days=2)
+    new_date = xdate - timedelta(days=3)
 
     
     from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -945,7 +945,7 @@ def generate_appointment_image(number, date, time, name,c_date):
     given_date = datetime.strptime(date_str, "%Y-%m-%d")
 
 # Add 3 days
-    new_date = given_date + timedelta(days=2)
+    new_date = given_date + timedelta(days=3)
 
 # Format the result back to string
     result = new_date.strftime("%d-%m-%Y")
@@ -1259,7 +1259,7 @@ def same_name(from_number,ap_type):
     
     date_str = date
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
-    new_date = xdate - timedelta(days=2)
+    new_date = xdate - timedelta(days=3)
 
     
     from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -1359,7 +1359,7 @@ def send_selection(from_number):
     date_str = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
     # date_str = '2025-05-30'
     xdate = datetime.strptime(date_str, "%Y-%m-%d")
-    new_date = xdate - timedelta(days=2)
+    new_date = xdate - timedelta(days=3)
 
     
     from_date = datetime.strptime(new_date.strftime("%Y-%m-%d"), "%Y-%m-%d")
@@ -1386,7 +1386,7 @@ def send_selection(from_number):
 
     def dateme(date):
         original_date = datetime.strptime(date, "%Y-%m-%d")
-        new_date = original_date + timedelta(days=2)
+        new_date = original_date + timedelta(days=3)
         formatted_date = new_date.strftime("%d-%m-%Y")
         return formatted_date
 
@@ -1394,7 +1394,7 @@ def send_selection(from_number):
     {
         "id": str(app["_id"]),
         "title": app["patient_name"],
-        "description": 'Appointment Valid till '+dateme(app["date_of_appointment"]),
+        "description": 'Appointment Valid Till 08:00AM (Morning) of'+dateme(app["date_of_appointment"]),
     }
     for app in result
     ]
@@ -1410,10 +1410,10 @@ def send_selection(from_number):
     "type": "list",
     "header": {
       "type": "text",
-      "text": ""
+      "text": "Re-Appointment"
     },
     "body": {
-      "text": "Re-Appointment"
+      "text": "Subject to Availability of Appointments Slot"
     },
     # "footer": {
     #   "text": "Powered by WhatsApp Cloud API"
