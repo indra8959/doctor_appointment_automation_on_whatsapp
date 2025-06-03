@@ -1394,7 +1394,7 @@ def send_selection(from_number):
     {
         "id": str(app["_id"]),
         "title": app["patient_name"],
-        "description": 'Appointment Valid Till 08:00AM (Morning) of'+dateme(app["date_of_appointment"]),
+        "description": 'Appointment Valid Till 08:00AM (Morning) of '+dateme(app["date_of_appointment"]),
     }
     for app in result
     ]
