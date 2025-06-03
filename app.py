@@ -17,7 +17,7 @@ import hmac
 import hashlib
 import json
 from apscheduler.schedulers.background import BackgroundScheduler
-
+from apscheduler.triggers.cron import CronTrigger
 
 app = Flask(__name__)
 CORS(app)
@@ -42,11 +42,15 @@ def scheduled_task():
     today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
     pdfdownload('916265578975',today_date)
     pdfdownload('918128265003',today_date)
+    # pdfdownload('918959690512',today_date)
     # print(f"Task running at {datetime.now()}")
 
 # Setup scheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=scheduled_task, trigger="cron", hour=8, minute=30)
+scheduler = BackgroundScheduler(timezone=ZoneInfo("Asia/Kolkata"))
+scheduler.add_job(
+    func=scheduled_task,
+    trigger=CronTrigger(hour=8, minute=30, timezone=ZoneInfo("Asia/Kolkata"))
+)
 scheduler.start()
 
 # Clean shutdown
@@ -57,7 +61,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 4.0"
+    return "updated 4.1"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
