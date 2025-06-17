@@ -6,7 +6,7 @@ import time
 import json
 # import datetime
 from receipt import receiptme
-from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name,send_selection,send_selection_enroll
+from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name,send_selection,send_selection_enroll, send_pdf_utility
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
@@ -39,11 +39,14 @@ API_KEY = "1234"
 # Home Route
 # 8128265003 doctor number
 def scheduled_task():
-    today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
-    pdfdownload('916265578975',today_date)
-    pdfdownload('918128265003',today_date)
+    # today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+    # pdfdownload('916265578975',today_date)
+    # pdfdownload('918128265003',today_date)
     # pdfdownload('918959690512',today_date)
     # print(f"Task running at {datetime.now()}")
+    send_pdf_utility('916265578975')
+    send_pdf_utility('918959690512')
+    send_pdf_utility('918128265003')
 
 # Setup scheduler
 scheduler = BackgroundScheduler(timezone=ZoneInfo("Asia/Kolkata"))
@@ -61,7 +64,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 4.3"
+    return "updated 4.4"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -107,6 +110,8 @@ def webhook():
             timestamp = message_info.get('timestamp')
             name = contact_info.get('profile', {}).get('name')
 
+        
+
             if is_recent(timestamp)==False:
 
                 if msg_type == 'interactive' and "button_reply" in message_info.get('interactive', {}):
@@ -136,6 +141,12 @@ def webhook():
                             templog.update_one({'_id': from_number}, {'$set': tempdata})
                         return custom_appointment_flow(from_number)
                     else:
+                        return "Invalid message type", 400
+                elif msg_type == 'button' and message_info.get('button', {})['text']=='Download':
+                    try:
+                        today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+                        return pdfdownload(from_number,today_date)
+                    except Exception as e:
                         return "Invalid message type", 400
                 elif msg_type == 'interactive' and "nfm_reply" in message_info.get('interactive', {}):
                     try:

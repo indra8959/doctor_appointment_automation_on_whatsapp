@@ -1505,3 +1505,35 @@ def send_selection_enroll(from_number):
     return "OK", 200
 
 
+
+
+
+
+def send_pdf_utility(from_number):
+
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+
+    incoming_data = {
+  "messaging_product": "whatsapp",
+  "to": from_number,
+  "type": "template",
+  "template": {
+    "name": "pdf_download",
+    "language": {
+      "code": "en"
+    },
+    "components": [
+      {
+        "type": "body",
+        "parameters": [
+          
+        ]
+      }
+    ]
+  }
+}
+
+
+    response = requests.post(external_url, json=incoming_data, headers=headers)
+    return "OK", 200
+
