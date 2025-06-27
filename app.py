@@ -64,7 +64,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 4.5"
+    return "updated 4.6"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -416,9 +416,9 @@ def login():
 def get_pdf_admin(id,date):
     return pdfdownload(id,date)  # Exclude MongoDB's default _id field
 
-@app.route("/pdf", methods=["GET"])
-def get_pdf():
-    data = pdfdownloadinapi()
+@app.route("/pdf/<string:date>/", methods=["GET"])
+def get_pdf(date):
+    data = pdfdownloadinapi(date)
     return data
     
 

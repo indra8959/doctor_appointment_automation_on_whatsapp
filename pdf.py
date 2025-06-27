@@ -368,9 +368,9 @@ def pdfdownloadcdate(from_number):
 
 
 
-def pdfdownloadinapi():
+def pdfdownloadinapi(zxdate):
     
-    zxdate = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+    # zxdate = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
     
     date_obj = datetime.strptime(zxdate, "%Y-%m-%d")
     formatted_date = date_obj.strftime("%d-%m-%Y")
