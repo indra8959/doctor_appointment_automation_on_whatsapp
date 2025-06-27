@@ -10,7 +10,7 @@ from appoint_flow import book_appointment, sendthankyou, appointment_flow, succe
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
-from pdf import pdfdownload,pdfdownloadcdate
+from pdf import pdfdownload,pdfdownloadcdate,pdfdownloadinapi
 from date_and_slots import dateandtime
 from zoneinfo import ZoneInfo
 import hmac
@@ -64,7 +64,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 4.4"
+    return "updated 4.5"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -416,6 +416,11 @@ def login():
 def get_pdf_admin(id,date):
     return pdfdownload(id,date)  # Exclude MongoDB's default _id field
 
+@app.route("/pdf", methods=["GET"])
+def get_pdf():
+    data = pdfdownloadinapi()
+    return data
+    
 
 # Get Users (GET)
 @app.route("/users", methods=["GET"])
