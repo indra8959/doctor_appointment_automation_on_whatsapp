@@ -47,6 +47,10 @@ def scheduled_task():
     send_pdf_utility('916265578975')
     send_pdf_utility('918959690512')
     send_pdf_utility('918128265003')
+    send_pdf_utility('918968804953')
+    send_pdf_utility('917087778151')
+    send_pdf_utility('916283450048')
+
 
 # Setup scheduler
 scheduler = BackgroundScheduler(timezone=ZoneInfo("Asia/Kolkata"))
@@ -64,7 +68,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 4.6"
+    return "updated 4.7"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -181,7 +185,7 @@ def webhook():
                 elif msg_type == 'text' and body.lower() == "pdf":
                     print(body.lower())
                     today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
-                    if from_number=="916265578975" or from_number=="918128265003":
+                    if from_number=="916265578975" or from_number=="918128265003" or from_number=="918968804953" or from_number=="917087778151" or from_number=="916283450048" or from_number=="918959690512":
                         return pdfdownload(from_number,today_date)
                     else:
                         return "ok",200
@@ -199,7 +203,7 @@ def webhook():
                         formatted_date = datetime.strptime(extracted_date, "%d-%m-%Y").strftime("%Y-%m-%d")
     
                         print(formatted_date)
-                    if from_number=="916265578975" or from_number=="918128265003":
+                    if from_number=="916265578975" or from_number=="918128265003" or from_number=="918968804953" or from_number=="917087778151" or from_number=="916283450048" or from_number=="918959690512":
                         return pdfdownload(from_number,formatted_date)
                     else:
                         return "ok",200

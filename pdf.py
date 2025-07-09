@@ -75,24 +75,30 @@ def pdfdownload(from_number,zxdate):
 # Convert JSON data to table format
         table_data = [["S.No",
                         # "Appointment No.",
-                          "Time Slot", "Name",
+                        #   "Time Slot",
+                            "Name",
                         # "Guardian Name",
                           "Date of Birth", "WhatsApp No.",
                         #   "Payment ID",
-                          "City","vaccine","Remark"]]  # Table header
+                          "City","vaccine",
+                          "Type",
+                          "Remark"]]  # Table header
 
         for i, item in enumerate(json_data, start=1):
+
+            aptype = "Reappointment" if item["pay_id"].startswith("old") else ""
                 
             table_data.append([
         str(i),  # Serial number
         # item["appoint_number"],
-        item["time_slot"],
+        # item["time_slot"],
         item["patient_name"], 
         # item["guardian_name"],
         item["date_of_birth"], 
         item["whatsapp_number"], 
         # item["pay_id"], 
         item["city"],
+        aptype,
         item["vaccine"],
         "        ",
         ])
@@ -426,18 +432,24 @@ def pdfdownloadinapi(zxdate):
 # Convert JSON data to table format
         table_data = [["S.No",
                         # "Appointment No.",
-                          "Time Slot", "Name",
+                        #   "Time Slot",
+                            "Name",
                         # "Guardian Name",
                           "Date of Birth", "WhatsApp No.",
                         #   "Payment ID",
-                          "City","vaccine","Remark"]]  # Table header
+                          "City","vaccine",
+                          "Type",
+                          "Remark"]]  # Table header
 
         for i, item in enumerate(json_data, start=1):
+
+            aptype = "Reappointment" if item["pay_id"].startswith("old") else ""
+    
                 
             table_data.append([
         str(i),  # Serial number
         # item["appoint_number"],
-        item["time_slot"],
+        # item["time_slot"],
         item["patient_name"], 
         # item["guardian_name"],
         item["date_of_birth"], 
@@ -445,6 +457,7 @@ def pdfdownloadinapi(zxdate):
         # item["pay_id"], 
         item["city"],
         item["vaccine"],
+            aptype,
         "        ",
         ])
 # Create a PDF file
