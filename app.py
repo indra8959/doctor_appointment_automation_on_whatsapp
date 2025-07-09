@@ -68,7 +68,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 4.7"
+    return "updated 4.8"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -395,7 +395,10 @@ def login():
         password = data.get("password")
 
         # Find user in database
-        user = doctors.find_one({"email": username})
+        # user = doctors.find_one({"email": username})
+
+        user = doctors.find_one({"$or": [{"email": username}, {"phone": username}]})
+
          
         if not user:
             return jsonify({"error": "Invalid username or password"}), 401
