@@ -178,7 +178,7 @@ def webhook():
                 elif msg_type == 'text' and body.lower() == "hi":
                     appointment_flow(from_number)
                     send_selection_enroll(from_number)
-                    send_selection(from_number)
+                    # send_selection(from_number)
                     print(body.lower())
                     # return old_user_send(from_number)
                     return "ok",200

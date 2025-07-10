@@ -98,8 +98,8 @@ def pdfdownload(from_number,zxdate):
         item["whatsapp_number"], 
         # item["pay_id"], 
         item["city"],
-        aptype,
         item["vaccine"],
+        aptype,
         "        ",
         ])
 # Create a PDF file
