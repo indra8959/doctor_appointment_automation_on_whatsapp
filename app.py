@@ -10,7 +10,7 @@ from appoint_flow import book_appointment, sendthankyou, appointment_flow, succe
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
-from pdf import pdfdownload,pdfdownloadcdate,pdfdownloadinapi
+from pdf import pdfdownload,pdfdownloadcdate,pdfdownloadinapi,taxpdfdownload1
 from date_and_slots import dateandtime
 from zoneinfo import ZoneInfo
 import hmac
@@ -65,10 +65,9 @@ import atexit
 atexit.register(lambda: scheduler.shutdown())
 
 
-
 @app.route("/")
 def home():
-    return "updated 4.9"
+    return "updated 5.0"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -192,6 +191,29 @@ def webhook():
                 elif msg_type == 'text' and body.lower() == "receipt":
                     print(body.lower())
                     return receiptme(from_number)
+                elif msg_type == 'text' and body.lower() == "tax":
+                    if from_number=="916265578975" or from_number=="918128265003" or from_number=="918968804953" or from_number=="917087778151" or from_number=="916283450048" or from_number=="918959690512":
+                        today_date = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d")
+                        return taxpdfdownload1(from_number,today_date)
+                    else:
+                        return "ok",200
+                    
+                elif msg_type == 'text' and body.lower().split()[0] == "tax":
+                    print(body.lower())
+
+                    match = re.search(r"\d{2}-\d{2}-\d{4}", body.lower())
+                    if match:
+                        extracted_date = match.group()  # "20-03-2024"
+    
+    # Convert to "YYYY-MM-DD" format
+                        formatted_date = datetime.strptime(extracted_date, "%d-%m-%Y").strftime("%Y-%m-%d")
+    
+                        print(formatted_date)
+                    if from_number=="916265578975" or from_number=="918128265003" or from_number=="918968804953" or from_number=="917087778151" or from_number=="916283450048" or from_number=="918959690512":
+                        return taxpdfdownload1(from_number,formatted_date)
+                    else:
+                        return "ok",200
+                    
                 elif msg_type == 'text' and body.lower().split()[0] == "pdf":
                     print(body.lower())
 
