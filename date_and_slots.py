@@ -37,7 +37,7 @@ def dateandtime(id):
     
             current_time = datetime.now(ZoneInfo("Asia/Kolkata")).time()
 
-            cutoff_time = datetime.strptime("08:00AM", "%I:%M%p").time()
+            cutoff_time = datetime.strptime("08:30AM", "%I:%M%p").time()
 
             print(cutoff_time)
 

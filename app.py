@@ -56,7 +56,7 @@ def scheduled_task():
 scheduler = BackgroundScheduler(timezone=ZoneInfo("Asia/Kolkata"))
 scheduler.add_job(
     func=scheduled_task,
-    trigger=CronTrigger(hour=8, minute=30, timezone=ZoneInfo("Asia/Kolkata"))
+    trigger=CronTrigger(hour=8, minute=35, timezone=ZoneInfo("Asia/Kolkata"))
 )
 scheduler.start()
 
@@ -67,7 +67,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 5.0"
+    return "updated 5.1"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
