@@ -19,9 +19,10 @@ import json
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+
+
 app = Flask(__name__)
 CORS(app)
-
 
 
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -56,7 +57,7 @@ def scheduled_task():
 scheduler = BackgroundScheduler(timezone=ZoneInfo("Asia/Kolkata"))
 scheduler.add_job(
     func=scheduled_task,
-    trigger=CronTrigger(hour=8, minute=35, timezone=ZoneInfo("Asia/Kolkata"))
+    trigger=CronTrigger(hour=8, minute=45, timezone=ZoneInfo("Asia/Kolkata"))
 )
 scheduler.start()
 
@@ -67,7 +68,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 5.1"
+    return "updated 5.2"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -153,7 +154,26 @@ def webhook():
                         return "Invalid message type", 400
                 elif msg_type == 'interactive' and "nfm_reply" in message_info.get('interactive', {}):
                     try:
-                        return book_appointment(data)
+                        document = templog.find_one({'_id':from_number})
+                        utc_expire_time = document["expiretime"].replace(tzinfo=ZoneInfo("UTC"))
+                        current_time = datetime.now(ZoneInfo("UTC"))
+                        if current_time > utc_expire_time:
+                            print(current_time,utc_expire_time)
+                        # if kolkata_time > expire_time:
+                            appointment_flow(from_number)
+                            send_selection_enroll(from_number)
+                            kolkata_time = datetime.now(ZoneInfo("Asia/Kolkata"))
+                            future_time = kolkata_time + timedelta(minutes=5)
+                            tempdata = {"number":from_number,"_id":from_number,"expiretime":future_time}
+                            try:
+                                templog.insert_one(tempdata)
+                            except:
+                                templog.update_one({'_id': from_number}, {'$set': tempdata})
+
+                    # return old_user_send(from_number)
+                            return "ok",200
+                        else:
+                            return book_appointment(data)
                     except Exception as e:
                         return "Invalid message type", 400
                 elif msg_type == 'interactive' and "list_reply" in message_info.get('interactive', {}):
@@ -168,17 +188,26 @@ def webhook():
                         return custom_appointment_flow(from_number)
                     except Exception as e:
                         return "Invalid message type", 400
-                elif msg_type == 'text' and body.lower() == "hii":
-                    print(body.lower())
-                    return old_user_send(from_number)
-                elif msg_type == 'text' and body.lower() == "st":
-                    print(body.lower())
-                    return send_selection_enroll(from_number)
+                # elif msg_type == 'text' and body.lower() == "hii":
+                #     print(body.lower())
+                #     return old_user_send(from_number)
+                # elif msg_type == 'text' and body.lower() == "st":
+                #     print(body.lower())
+                #     return send_selection_enroll(from_number)
                 elif msg_type == 'text' and body.lower() == "hi":
                     appointment_flow(from_number)
                     send_selection_enroll(from_number)
                     # send_selection(from_number)
                     print(body.lower())
+
+                    utc_now = datetime.now(ZoneInfo("UTC"))
+                    future_time = utc_now + timedelta(minutes=5)
+                    tempdata = {"number":from_number,"_id":from_number,"expiretime":future_time}
+                    try:
+                        templog.insert_one(tempdata)
+                    except:
+                        templog.update_one({'_id': from_number}, {'$set': tempdata})
+
                     # return old_user_send(from_number)
                     return "ok",200
                 elif msg_type == 'text' and body.lower() == "pdf":
