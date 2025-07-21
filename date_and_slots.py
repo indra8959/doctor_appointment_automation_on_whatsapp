@@ -22,7 +22,7 @@ def dateandtime(id):
             datas = document
 
             def get_next_7_days():
-                today = datetime.today()
+                today = datetime.today(ZoneInfo("Asia/Kolkata"))
                 dates = [(today + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(8)]
                 return dates
 
