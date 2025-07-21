@@ -7,4 +7,5 @@ requests
 flask_cors
 fpdf
 apscheduler
+cryptography
 

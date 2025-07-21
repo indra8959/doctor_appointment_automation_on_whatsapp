@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify,redirect
+from flask import Flask, request, jsonify,redirect,Response
 from pymongo import MongoClient
 import re
 from datetime import datetime, timedelta
@@ -6,7 +6,7 @@ import time
 import json
 # import datetime
 from receipt import receiptme
-from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name,send_selection,send_selection_enroll, send_pdf_utility
+from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name,send_selection,send_selection_enroll, send_pdf_utility, appointment_flow_expire
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
@@ -34,6 +34,7 @@ templog = db["logs"]
 disableslot = db["disableslot"] 
 
 API_KEY = "1234"
+
 
 # print(dateandtime(f'2025-03-23'))
 
@@ -153,27 +154,82 @@ def webhook():
                     except Exception as e:
                         return "Invalid message type", 400
                 elif msg_type == 'interactive' and "nfm_reply" in message_info.get('interactive', {}):
-                    try:
+
+                    
+                    # utc_expire_time = document["expiretime"].replace(tzinfo=ZoneInfo("UTC"))
+                    # current_time = datetime.now(ZoneInfo("UTC"))
+
+                
+                    response_json_data2 = data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"]["response_json"]
+                    json_data2 = json.loads(response_json_data2)
+                    role = json_data2.get("role")
+                    print(role)
+
+                    if role=='ex':
                         document = templog.find_one({'_id':from_number})
-                        utc_expire_time = document["expiretime"].replace(tzinfo=ZoneInfo("UTC"))
-                        current_time = datetime.now(ZoneInfo("UTC"))
-                        if current_time > utc_expire_time:
-                            print(current_time,utc_expire_time)
-                        # if kolkata_time > expire_time:
-                            appointment_flow(from_number)
-                            send_selection_enroll(from_number)
-                            kolkata_time = datetime.now(ZoneInfo("Asia/Kolkata"))
-                            future_time = kolkata_time + timedelta(minutes=5)
-                            tempdata = {"number":from_number,"_id":from_number,"expiretime":future_time}
+                        data1 = document['store_data']
+
+                        response_json_data1 = data1["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"]["response_json"]
+                        response_json_data2 = data["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"]["response_json"]
+                        json1 = json.loads(response_json_data1)
+                        json2 = json.loads(response_json_data2)
+                        for key in ["Date_of_appointment_0", "Time_Slot_1"]:
+                            if key in json2:
+                                json1[key] = json2[key]
+                        data1["entry"][0]["changes"][0]["value"]["messages"][0]["interactive"]["nfm_reply"]["response_json"] = json.dumps(json1)
+                        data = data1
+
+
+
+                    try:
+
+                        # Sample data list
+
+#                         mydatetime = [
+#     {'id': '2025-07-22', 'title': '2025-07-22'},
+#     {'id': '2025-07-23', 'title': '2025-07-23'},
+#     {'id': '2025-07-24', 'title': '2025-07-24'},
+#     {'id': '2025-07-25', 'title': '2025-07-25', "enabled": False},
+#     {'id': '2025-07-26', 'title': '2025-07-26'},
+#     {'id': '2025-07-27', 'title': '2025-07-27', "enabled": False},
+#     {'id': '2025-07-28', 'title': '2025-07-28'}
+
+
+# ]
+                        mydatetime = dateandtime('date')
+
+                        date_to_check = json_data2.get("Date_of_appointment_0")
+                        exists = any(item['id'] == date_to_check and item.get("enabled", True) for item in mydatetime)
+                        if exists:
+                            return book_appointment(data)
+                        elif role=='ex':
+                            return appointment_flow_expire(from_number)
+                        else:
+                            tempdata = {"number":from_number,"_id":from_number,'store_data':data}
                             try:
                                 templog.insert_one(tempdata)
                             except:
                                 templog.update_one({'_id': from_number}, {'$set': tempdata})
+                            return appointment_flow_expire(from_number)
 
-                    # return old_user_send(from_number)
-                            return "ok",200
-                        else:
-                            return book_appointment(data)
+                        
+                    #     if current_time > utc_expire_time:
+                    #         print(current_time,utc_expire_time)
+      
+                    #         appointment_flow_expire(from_number)
+            
+                    #         kolkata_time = datetime.now(ZoneInfo("Asia/Kolkata"))
+                    #         future_time = kolkata_time + timedelta(minutes=5)
+                    #         tempdata = {"number":from_number,"_id":from_number,"expiretime":future_time,'store_data':data}
+                    #         try:
+                    #             templog.insert_one(tempdata)
+                    #         except:
+                    #             templog.update_one({'_id': from_number}, {'$set': tempdata})
+
+                    # # return old_user_send(from_number)
+                    #         return "ok",200
+                    #     else:
+                    #         return book_appointment(data)
                     except Exception as e:
                         return "Invalid message type", 400
                 elif msg_type == 'interactive' and "list_reply" in message_info.get('interactive', {}):
@@ -200,13 +256,13 @@ def webhook():
                     # send_selection(from_number)
                     print(body.lower())
 
-                    utc_now = datetime.now(ZoneInfo("UTC"))
-                    future_time = utc_now + timedelta(minutes=5)
-                    tempdata = {"number":from_number,"_id":from_number,"expiretime":future_time}
-                    try:
-                        templog.insert_one(tempdata)
-                    except:
-                        templog.update_one({'_id': from_number}, {'$set': tempdata})
+                    # utc_now = datetime.now(ZoneInfo("UTC"))
+                    # future_time = utc_now + timedelta(minutes=5)
+                    # tempdata = {"number":from_number,"_id":from_number,"expiretime":future_time}
+                    # try:
+                    #     templog.insert_one(tempdata)
+                    # except:
+                    #     templog.update_one({'_id': from_number}, {'$set': tempdata})
 
                     # return old_user_send(from_number)
                     return "ok",200
@@ -791,12 +847,111 @@ def getindex(docter_id,tslot,date):
 
 
 
+# flow
+from encryption import decrypt_request, encrypt_response, FlowEndpointException
+from flow import get_next_screen
 
-if __name__ == "__main__":
-    app.run(port=5000,host="0.0.0.0")
+PASSPHRASE = "password"
+APP_SECRET = "62528c1b0adc2320d8b6e27b0254ede0"
+PRIVATE_KEY = """-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFJDBWBgkqhkiG9w0BBQ0wSTAxBgkqhkiG9w0BBQwwJAQQd6lQS6B5yB3w35l9
+nsF+QAICCAAwDAYIKoZIhvcNAgkFADAUBggqhkiG9w0DBwQIzrJNJZQ76F4EggTI
+TucgxOwQlFeqJIv8PNepQOToYpWZyYR6w8KOhc0T3N/9bI6dpLUSEuW5FbcM5zmx
+33CsMfEqWuEnaALuhxWJfFWEQEYHyJMXgaFvW9k6W14ZmyTaW3S3rwKThsYWaZcc
+PLx/stu0eaRDde8sBIi6tN8ujPJofpFFC7vo4mKNN46lE+CPwPNTeu/sRogdOv74
+KS9LFxYt44bEooa4A2WCKd5EzyefN6eLx1j5Rpz9mcHBRBvwGEy211HduxqPXamc
+GxqVdgUMz3a+MXCqhqBs4abhUw5jPhSwsxli+xNIAti7g4dgfTyuzI9v+PR6pnOL
+xJrFbkpd0mvpvTwhufVB0k8zbJwDjDnb8DlTf75PAApRCJx6sUw7BlJEy43DHtzr
+xMVWdd6qiMAroV50W/HHXMW649VbqWQPwdcoxE4OJykMIDZ+2orXrfh/PoVBvQoE
+IBfBgWyuaBxAF/+2filulkpLwMHjEuxb8wssCA8gNnDNsHrlVMlFtdobUxHHE8ID
+efviJVG/TXp4jcr8McF0mZBbP1FGKb2kuDhcBTGhBQgjJA7Xba0macAfXnmrJuGl
+tPQshid4tO1GFuKkx0dWbTwlmcWgg4a3V++2+om2dRQ//NeyOEgG8/3hXArx699g
+Jufjg8v7lQcMyYYwxEPxfNYjnuU5DeJn+ebgVP9vQvY+mLIA0arIj2RUhLBZgWZi
+lHvlqI2ofXWpkJpuKqBYjOH7Vo6hkDQjo6h4uaS0YouuY7+di7UxE8zt0f/ODLWn
+lYIqCJ9tvFPXkTJ9H9z3K8cA2QLgiZcvJTkHBMq5sKslsBb+iMiTwub+ka6Q0TM5
+0EhJE4qQHMJKDtsrr0Qy6kXA7NlK3sLWMcFeNSmBUEW+K7GruvwZwAzWd3GVqjwo
+XYvxjRFu82Yp5Ric1Q2/+VNK27gYD/ONcfpqrsvZo6G6bAVQ1vhLcqBdDDslyEbP
+ix08SunoGCNzIGLpJ5j/0bDaz1RIfMvRwwtiNldhRHEv+q44AU9Hr5TdzGCNO9Sf
+xMgUArYdObqAAwTUhlcM9Py0ZLl0Xvvh3lMjGUnXHvykBi8gNvcm1BZkQZTANXFJ
+GG35B3+Q2oRtePTQxT1cgV4XOfM4NexOa3RPKbt4qnqcyCgYVtZa0nQW3JNMbbox
+t9kP+8N7IjZMnxDwEG9WSc44GzCGK8kY3G/yxePnPCd8DVP6O2W1+uzka0mjsGj5
+93U4wqEC3YwAjuuJXeX7pDe4ehyh1wF3aer4sSZbJMRnuPDWqMyscHjRqx+8K9ZR
+2Abm/Uo8fjO3lKWTsvUfrf6brpxwlysHli6hq+i7oWIs5LRxwAIrsy8sx5gLTNrB
+/sBz7xBXHXUoQ17LC/EPCyCuNDdCCTAy2zCSTzypKQxRVMRDldyC8xMOmc4GWYrq
+8yu1uEYpD3HHA7eQXm+pwcwkaU9lgI5XyUhRuyuFucDpuyIzjuJCGLZsPw3XK8B/
+iUoHbXrTPt42+OKdwMggVpsp1Ll03ogh69h0iE7zDxz9O9SzNEMFqunNj+G09ISx
+Q0IKi7TQUwfWzilTUSEpaUXBpSL+C9RiOIrnd0h89kbzDEqU2PE6l4GuRrtvIuLK
+k3aT53ltPKzgI5Aa/w2fVTCPoDW9kI2R
+-----END ENCRYPTED PRIVATE KEY-----"""
+
+@app.route("/dt_flow", methods=["POST"])
+def handle_request():
+    if not PRIVATE_KEY:
+        raise Exception('Private key is empty. Please check your environment variable "PRIVATE_KEY".')
+    
+    if not is_request_signature_valid(request):
+        return Response(status=432)
+    
+    try:
+        decrypted_request = decrypt_request(request.json, PRIVATE_KEY, PASSPHRASE)
+    except FlowEndpointException as err:
+        return Response(status=err.status_code)
+    except Exception as err:
+        print(err)
+        return Response(status=500)
+    
+    aes_key_buffer = decrypted_request["aesKeyBuffer"]
+    initial_vector_buffer = decrypted_request["initialVectorBuffer"]
+    decrypted_body = decrypted_request["decryptedBody"]
+    
+    print("\U0001F4AC Decrypted Request:", decrypted_body)
+    
+    screen_response = get_next_screen(decrypted_body)
+    print("\U0001F449 Response to Encrypt:", screen_response)
+    
+    return encrypt_response(screen_response, aes_key_buffer, initial_vector_buffer)
+
+@app.route("/dt_flow", methods=["GET"])
+def home_df():
+    return "<pre>Nothing to see here.\nCheckout README.md to start.</pre>"
+
+def is_request_signature_valid(req):
+    if not APP_SECRET:
+        print("Warning: App Secret is not set. Please add it in the .env file.")
+        return True
+    
+    signature_header = req.headers.get("x-hub-signature-256")
+    if not signature_header:
+        print("Error: Missing x-hub-signature-256 header")
+        return False
+    
+    signature_buffer = bytes.fromhex(signature_header.replace("sha256=", ""))
+    
+    raw_body = req.data
+    if not raw_body:
+        print("Error: req.data is undefined. Ensure middleware is set up correctly.")
+        return False
+    
+    digest = hmac.new(APP_SECRET.encode(), raw_body, hashlib.sha256).digest()
+    
+    if not hmac.compare_digest(digest, signature_buffer):
+        print("Error: Request Signature did not match")
+        return False
+    
+    return True
+
+
+
+
+
 
 
 
 # if __name__ == "__main__":
-#     app.run(port=5000,debug=True)
+#     app.run(port=5000,host="0.0.0.0")
+
+
+
+if __name__ == "__main__":
+    app.run(port=5000,debug=True)
 

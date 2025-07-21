@@ -3,6 +3,17 @@ import json
 import re
 import time
 from threading import Thread
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+# from pymongo import MongoClient
+
+# MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+# client = MongoClient(MONGO_URI)
+# db = client.get_database("caredb")
+# doctors = db["doctors"] 
+# appointment = db["appointment"] 
+# templog = db["logs"] 
+# disableslot = db["disableslot"] 
 
 def expire_payment_link(payment_link_id, rzid, rzk):
     """Expires a Razorpay payment link by sending a POST to /cancel."""
@@ -13,6 +24,13 @@ def expire_payment_link(payment_link_id, rzid, rzk):
     time.sleep(300)
 
     response = requests.post(url, auth=auth)
+
+    # appointment_flow(from_number)
+    # send_selection_enroll(from_number)
+    # utc_now = datetime.now(ZoneInfo("UTC"))
+    # future_time = utc_now + timedelta(minutes=5)
+    # tempdata = {"number":from_number,"_id":from_number,"expiretime":future_time}
+    # templog.update_one({'_id': from_number}, {'$set': tempdata})
 
     if response.status_code == 200:
         print("Payment link expired successfully.")

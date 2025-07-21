@@ -11,6 +11,9 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from zoneinfo import ZoneInfo
 
+
+
+
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
 db = client.get_database("caredb")
@@ -623,6 +626,39 @@ def appointment_flow(from_number):
     "type": "template", 
     "template": { 
         "name": "final_appointment2", 
+        "language": { "code": "en" },
+        "components": [
+            {
+                "type": "header"
+            },
+            {
+                "type": "body",
+                "parameters": []
+            },
+            {
+                "type": "button",
+                "sub_type": "flow",  
+                "index": "0"  
+            }
+        ]
+    } 
+}
+
+    response = requests.post(external_url, json=incoming_data, headers=headers)
+    print(jsonify(response.json()))
+    return "OK", 200
+
+
+def appointment_flow_expire(from_number):
+
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+
+    incoming_data = { 
+    "messaging_product": "whatsapp", 
+    "to": from_number, 
+    "type": "template", 
+    "template": { 
+        "name": "expire_after_send", 
         "language": { "code": "en" },
         "components": [
             {
