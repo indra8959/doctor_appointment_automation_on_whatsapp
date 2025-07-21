@@ -69,7 +69,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 5.2"
+    return "updated 5.3"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -947,11 +947,11 @@ def is_request_signature_valid(req):
 
 
 
-# if __name__ == "__main__":
-#     app.run(port=5000,host="0.0.0.0")
-
-
-
 if __name__ == "__main__":
-    app.run(port=5000,debug=True)
+    app.run(port=5000,host="0.0.0.0")
+
+
+
+# if __name__ == "__main__":
+#     app.run(port=5000,debug=True)
 
