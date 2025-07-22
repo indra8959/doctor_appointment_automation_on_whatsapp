@@ -10,7 +10,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from zoneinfo import ZoneInfo
-
+from pay_link_with_image import pay_now_image
 
 
 
@@ -47,53 +47,55 @@ phone_id = '563776386825270'
     
 def send_payment_flow(from_number,name,date,slot,amount,link):
 
-    print(from_number,name,date,slot,amount,link)
+
+
+    # print(from_number,name,date,slot,amount,link)
 
     formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%d-%m-%Y")
 
-    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+    # external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
-    incoming_data = { 
-        "messaging_product": "whatsapp", 
-        "to": from_number, "type": "template", 
-        "template": { 
-            # "name": "razorpay_send_link_manual", 
-            "name": "razorpay_send_link_2", 
-            "language": { 
-                "code": "en" 
-            },
-            "components": [
-                {
-                    "type": "body",
-                    "parameters": [{
-                        "type": "text",
-                        "text": name
-                    },{
-                        "type": "text",
-                        "text": formatted_date
-                    },{
-                        "type": "text",
-                        "text": slot
-                    },{
-                        "type": "text",
-                        "text": amount
-                    }]
-                },
-                {
-                "type": "button",
-                "index": "0",
-                "sub_type": "url",
-                "parameters": [
-                    {
-                        "type": "text",
-                        "text": link
-                    }
-                ]}
-            ]} 
-        }
+    # incoming_data = { 
+    #     "messaging_product": "whatsapp", 
+    #     "to": from_number, "type": "template", 
+    #     "template": { 
+    #         # "name": "razorpay_send_link_manual", 
+    #         "name": "razorpay_send_link_2", 
+    #         "language": { 
+    #             "code": "en" 
+    #         },
+    #         "components": [
+    #             {
+    #                 "type": "body",
+    #                 "parameters": [{
+    #                     "type": "text",
+    #                     "text": name
+    #                 },{
+    #                     "type": "text",
+    #                     "text": formatted_date
+    #                 },{
+    #                     "type": "text",
+    #                     "text": slot
+    #                 },{
+    #                     "type": "text",
+    #                     "text": amount
+    #                 }]
+    #             },
+    #             {
+    #             "type": "button",
+    #             "index": "0",
+    #             "sub_type": "url",
+    #             "parameters": [
+    #                 {
+    #                     "type": "text",
+    #                     "text": link
+    #                 }
+    #             ]}
+    #         ]} 
+    #     }
 
-    response = requests.post(external_url, json=incoming_data, headers=headers)
-    return "OK", 200
+    # response = requests.post(external_url, json=incoming_data, headers=headers)
+    return pay_now_image(from_number,name,amount,formatted_date,slot,link)
 
 # print(send_payment_flow('918959690512','name','date','slot','amount','link'))
 

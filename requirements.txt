@@ -8,4 +8,5 @@ flask_cors
 fpdf
 apscheduler
 cryptography
+pillow
 
