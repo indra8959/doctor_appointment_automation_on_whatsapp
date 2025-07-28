@@ -18,7 +18,8 @@ import hashlib
 import json
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-
+# import requests
+# from requests.auth import HTTPBasicAuth
 
 
 app = Flask(__name__)
@@ -36,7 +37,6 @@ disableslot = db["disableslot"]
 API_KEY = "1234"
 
 
-# print(dateandtime(f'2025-03-23'))
 
 # Home Route
 # 8128265003 doctor number
@@ -46,8 +46,8 @@ def scheduled_task():
     # pdfdownload('918128265003',today_date)
     # pdfdownload('918959690512',today_date)
     # print(f"Task running at {datetime.now()}")
-    send_pdf_utility('916265578975')
-    send_pdf_utility('918959690512')
+    # send_pdf_utility('916265578975')
+    # send_pdf_utility('918959690512')
     send_pdf_utility('918128265003')
     send_pdf_utility('918968804953')
     send_pdf_utility('917087778151')
@@ -69,7 +69,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 5.7"
+    return "updated 5.8"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -408,6 +408,89 @@ def get_slot():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/get_refund_report", methods=["POST"])
+def refund_report():
+    try:
+        api_key = request.headers.get("x-api-key")
+        if not api_key or api_key != API_KEY:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        data = request.json
+        doctor_id = '67ee5e1bde4cb48c515073ee'
+
+        # Fetch appointment and disabled slot data
+        appointmentdata = list(appointment.find(
+            {"doctor_phone_id": doctor_id, "date_of_appointment": data.get("date"),"amount":{"$gt": 0}},
+            {"_id": 0}
+        ))
+
+        disableslotdata = list(disableslot.find(
+            {"doctor_id": doctor_id, "date": data.get("date"), "enable": False},
+            {"_id": 0}
+        ))
+
+
+
+        # Step 1: Create set of disabled time slots for fast lookup
+        disabled_slots = {slot["slot"] for slot in disableslotdata}
+
+        # Step 2: Filter appointments whose time_slot is in disabled_slots
+        refunded_appointments = [
+            appt for appt in appointmentdata if appt["time_slot"] in disabled_slots
+        ]
+
+        if not refunded_appointments:
+            return jsonify({"error": "No matching appointments found"}), 404
+
+        return jsonify(refunded_appointments), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+# RAZORPAY_KEY_ID = 'rzp_test_YourKeyID'
+# RAZORPAY_KEY_SECRET = 'YourSecretKey'
+
+# @app.route("/refund_payment", methods=["POST"])
+# def refund_payment():
+#     try:
+#         data = request.get_json()
+
+#         payment_id = data.get("payment_id")
+#         amount = data.get("amount")  # in paise (optional)
+
+#         if not payment_id:
+#             return jsonify({"error": "Missing payment_id"}), 400
+
+#         refund_url = f"https://api.razorpay.com/v1/payments/{payment_id}/refund"
+
+#         payload = {}
+#         if amount:
+#             payload["amount"] = amount  # e.g., 10000 for ₹100
+
+#         # Optional: refund speed and notes
+#         payload["speed"] = "optimum"
+#         payload["notes"] = {"reason": "Customer requested refund"}
+
+#         # Make the refund request
+#         response = requests.post(
+#             refund_url,
+#             auth=HTTPBasicAuth(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET),
+#             json=payload
+#         )
+
+#         if response.status_code == 200:
+#             return jsonify(response.json()), 200
+#         else:
+#             return jsonify({
+#                 "error": "Refund failed",
+#                 "status_code": response.status_code,
+#                 "response": response.text
+#             }), response.status_code
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
     
 
 @app.route("/update_user/<string:id>/", methods=["POST"])

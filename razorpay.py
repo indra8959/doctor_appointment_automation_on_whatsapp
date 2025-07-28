@@ -60,7 +60,7 @@ def pay_link(name, number, email, id, rs, rzid, rzk):
             "sms": False,
             "email": False
         },
-        "callback_url": f"https://care2connect.in/payment_callback2/{id}/",
+        "callback_url": f"https://api.care2connect.in/payment_callback2/{id}/",
         "callback_method": "get"
     }
 
