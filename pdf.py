@@ -64,7 +64,7 @@ def pdfdownload(from_number,zxdate):
                      'city':' ',
                      'vaccine':' '
                      })
-        slot_data.reverse()
+        # slot_data.reverse()
     
         custom_array.extend(slot_data)
 
@@ -247,7 +247,7 @@ def pdfdownloadcdate(from_number):
                      'city':' ',
                      'vaccine':' '
                      })
-        slot_data.reverse()
+        # slot_data.reverse()
     
         custom_array.extend(slot_data)
 
@@ -421,7 +421,7 @@ def pdfdownloadinapi(zxdate):
                      'city':' ',
                      'vaccine':' '
                      })
-        slot_data.reverse()
+        # slot_data.reverse()
     
         custom_array.extend(slot_data)
 

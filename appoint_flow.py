@@ -356,6 +356,40 @@ def custom_book_appointment(data):
 
 
 
+# def getindex(docter_id,tslot,date):
+
+#     doc_id = ObjectId(docter_id)
+#     document = doctors.find_one({"_id": doc_id})
+#     xslot = document['slots']['slotsvalue']
+
+#     formatted_output = [
+#                 {
+#                      "id": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+ datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+#                     "slot": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+#                     "length": item["maxno"]
+#                 }
+#                 for index, item in enumerate(xslot)
+#                 ]
+
+#     target_id = tslot
+#     total_length = 1
+
+#     for slot in formatted_output:
+#         if slot['id'] == target_id:
+#             total_length += int(slot['length'])
+#             break
+#         total_length += int(slot['length'])
+
+
+#     result = list(appointment.find({"doctor_phone_id": docter_id,'time_slot':tslot ,"date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+#     data_length = 0
+#     if result:
+#         data_length = len(result)
+
+#     appointment_number = total_length-data_length-1
+#     print(appointment_number)
+#     return appointment_number
+
 def getindex(docter_id,tslot,date):
 
     doc_id = ObjectId(docter_id)
@@ -372,25 +406,22 @@ def getindex(docter_id,tslot,date):
                 ]
 
     target_id = tslot
-    total_length = 1
+    total_length = 0
 
     for slot in formatted_output:
         if slot['id'] == target_id:
-            total_length += int(slot['length'])
             break
         total_length += int(slot['length'])
 
 
     result = list(appointment.find({"doctor_phone_id": docter_id,'time_slot':tslot ,"date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
-    data_length = 0
+    data_length = 1
     if result:
-        data_length = len(result)
+        data_length = len(result)+1
 
-    appointment_number = total_length-data_length-1
+    appointment_number = data_length+total_length
     print(appointment_number)
     return appointment_number
-
-
 
 def book_appointment(data):
 

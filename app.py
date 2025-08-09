@@ -25,6 +25,10 @@ from apscheduler.triggers.cron import CronTrigger
 app = Flask(__name__)
 CORS(app)
 
+# razorpay
+
+# rzp_live_wM3q1LR9LLJA1F
+# XFAR0gGwtjqTKuwt777kAKvx
 
 MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(MONGO_URI)
@@ -69,7 +73,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 5.8"
+    return "updated 5.9"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -744,6 +748,46 @@ def getindex(docter_id,tslot,date):
     return appointment_number
 
 
+
+    
+# def getindex(docter_id,tslot,date):
+
+#     doc_id = ObjectId(docter_id)
+#     document = doctors.find_one({"_id": doc_id})
+#     xslot = document['slots']['slotsvalue']
+
+#     formatted_output = [
+#                 {
+#                      "id": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+ datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+#                     "slot": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
+#                     "length": item["maxno"]
+#                 }
+#                 for index, item in enumerate(xslot)
+#                 ]
+
+#     target_id = tslot
+#     total_length = 1
+
+#     for slot in formatted_output:
+#         if slot['id'] == target_id:
+#             total_length += int(slot['length'])
+#             break
+#         total_length += int(slot['length'])
+
+
+#     result = list(appointment.find({"doctor_phone_id": docter_id,'time_slot':tslot ,"date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+#     data_length = 0
+#     if result:
+#         data_length = len(result)
+
+#     appointment_number = total_length-data_length-1
+#     print(appointment_number)
+#     return appointment_number
+
+
+
+
+
 WEBHOOK_SECRET = "doctor"
 
 @app.route('/razorpay/webhook', methods=['POST'])
@@ -892,42 +936,6 @@ def payment_callback2(id):
         # Payment failed or was not captured
         print("Payment failed or not captured!")
         return jsonify({'status': 'failed', 'message': 'Payment failed or not captured'}), 400
-    
-def getindex(docter_id,tslot,date):
-
-    doc_id = ObjectId(docter_id)
-    document = doctors.find_one({"_id": doc_id})
-    xslot = document['slots']['slotsvalue']
-
-    formatted_output = [
-                {
-                     "id": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+ datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
-                    "slot": datetime.strptime(item["slot"]["stime"], "%H:%M").strftime("%I:%M %p")+" - "+datetime.strptime(item["slot"]["etime"], "%H:%M").strftime("%I:%M %p"),
-                    "length": item["maxno"]
-                }
-                for index, item in enumerate(xslot)
-                ]
-
-    target_id = tslot
-    total_length = 1
-
-    for slot in formatted_output:
-        if slot['id'] == target_id:
-            total_length += int(slot['length'])
-            break
-        total_length += int(slot['length'])
-
-
-    result = list(appointment.find({"doctor_phone_id": docter_id,'time_slot':tslot ,"date_of_appointment":date,"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
-    data_length = 0
-    if result:
-        data_length = len(result)
-
-    appointment_number = total_length-data_length-1
-    print(appointment_number)
-    return appointment_number
-
-
 
 
 
@@ -941,5 +949,5 @@ if __name__ == "__main__":
 
 
 # if __name__ == "__main__":
-#     app.run(port=5000,debug=True)
+#     app.run(port=5001,debug=True)
 
