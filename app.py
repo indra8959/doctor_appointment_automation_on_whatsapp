@@ -73,7 +73,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 5.9"
+    return "updated 6.0"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -938,7 +938,51 @@ def payment_callback2(id):
         return jsonify({'status': 'failed', 'message': 'Payment failed or not captured'}), 400
 
 
+@app.route('/quick_razorpay_webhook', methods=['GET', 'POST'])
+def razorpay_webhookupdated():
+    try:
+        payload = request.data
+        received_signature = request.headers.get('X-Razorpay-Signature')
 
+        # Create HMAC SHA256 signature
+        generated_signature = hmac.new(
+            WEBHOOK_SECRET.encode(),
+            payload,
+            hashlib.sha256
+        ).hexdigest()
+
+        # Compare signatures
+        if not hmac.compare_digest(generated_signature, received_signature):
+            print("❌ Invalid signature")
+            return jsonify({'status': 'unauthorized'}), 400
+
+        # Signature verified
+        data = json.loads(payload)
+        # print("✅ Webhook verified:", json.dumps(data, indent=2)) 
+
+        event = data.get("event")
+
+        if event == "payment_link.paid":
+            payment = data["payload"]["payment"]["entity"]
+            short_url = data["payload"]["payment_link"]["entity"]["short_url"]
+            print("💰 Payment Received:", payment["id"], payment["amount"],short_url)
+
+            retrieved_data = appointment.find_one({"razorpay_url": short_url})
+
+            if not retrieved_data:
+                 return 'ok',200
+
+            doc_id = ObjectId(retrieved_data['_id'])
+            appointment.update_one({'_id': doc_id},{'$set':{'payment_status':'paid'}})
+
+            return jsonify({'status': 'success'}), 200
+           
+        return jsonify({'status': 'success'}), 200
+
+    except Exception as e:
+        print("⚠️ Exception:", str(e))
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    
 
 
 

@@ -5,15 +5,17 @@ import time
 from threading import Thread
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-# from pymongo import MongoClient
+from pymongo import MongoClient
 
-# MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-# client = MongoClient(MONGO_URI)
-# db = client.get_database("caredb")
-# doctors = db["doctors"] 
-# appointment = db["appointment"] 
-# templog = db["logs"] 
-# disableslot = db["disableslot"] 
+from bson.objectid import ObjectId
+
+MONGO_URI = "mongodb+srv://care2connect:connect0011@cluster0.gjjanvi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+client = MongoClient(MONGO_URI)
+db = client.get_database("caredb")
+doctors = db["doctors"] 
+appointment = db["appointment"] 
+templog = db["logs"] 
+disableslot = db["disableslot"] 
 
 def expire_payment_link(payment_link_id, rzid, rzk):
     """Expires a Razorpay payment link by sending a POST to /cancel."""
@@ -73,6 +75,9 @@ def pay_link(name, number, email, id, rs, rzid, rzk):
         payment_link_id = payment_data.get("id")
 
         print("Payment Link Created:", short_url)
+
+        doc_id = ObjectId(id)
+        appointment.update_one({'_id': doc_id}, {'$set': {'razorpay_url':short_url,'payment_status':'link generated'}})
 
         # Start a background thread to auto-expire the link after 5 minutes
         expiry_thread = Thread(target=expire_payment_link, args=(payment_link_id, rzid, rzk))
