@@ -27,6 +27,10 @@ CORS(app)
 
 # razorpay
 
+
+# rzp_test_N6qQ6xBkec7ER4
+# fbKeii72zk6xbaUoJITOPqP8
+
 # rzp_live_wM3q1LR9LLJA1F
 # XFAR0gGwtjqTKuwt777kAKvx
 
@@ -73,7 +77,7 @@ atexit.register(lambda: scheduler.shutdown())
 
 @app.route("/")
 def home():
-    return "updated 6.0"
+    return "updated 6.1"
 
 def is_recent(timestamp):
                 timestamp = int(timestamp)  # Ensure it's an integer
@@ -885,53 +889,53 @@ def payment_callback2(id):
     # Verify the payment status and act accordingly
     if callback_data.get('razorpay_payment_link_status') == 'paid':
 
-        doc_id = ObjectId(id)
-        retrieved_data = appointment.find_one({"_id": doc_id})
+        # doc_id = ObjectId(id)
+        # retrieved_data = appointment.find_one({"_id": doc_id})
 
-        print(retrieved_data['doctor_phone_id'])
+        # print(retrieved_data['doctor_phone_id'])
 
-        result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":retrieved_data['date_of_appointment'],"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
-        data_length = 1
-        if result:
-            data_length = len(result)+1
+        # result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":retrieved_data['date_of_appointment'],"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+        # data_length = 1
+        # if result:
+        #     data_length = len(result)+1
 
-        xdate = retrieved_data['date_of_appointment']
-        date_obj = datetime.strptime(xdate, "%Y-%m-%d")
-        formatted_date = date_obj.strftime("%Y%m%d")
+        # xdate = retrieved_data['date_of_appointment']
+        # date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+        # formatted_date = date_obj.strftime("%Y%m%d")
 
-        appoint_number = str(formatted_date)+'-'+str(data_length)
+        # appoint_number = str(formatted_date)+'-'+str(data_length)
 
-        print('1')
-
-
-        dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
-        fee = float(dxxocument.get('appointmentfee'))
-
-        print('1')
+        # print('1')
 
 
-        index_number = getindex(retrieved_data['doctor_phone_id'],retrieved_data['time_slot'],xdate)
+        # dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+        # fee = float(dxxocument.get('appointmentfee'))
 
-        print('1')
-
-
-        appointment.update_one({'_id': doc_id},{'$set':{'status':'success','pay_id':callback_data.get('razorpay_payment_id'),'appoint_number':appoint_number,'amount':fee,'appointment_index':index_number}})
-
-        print('1')
-        name = str(retrieved_data['patient_name'])
-        payment_id = str(callback_data.get('razorpay_payment_id'))
-        doa = str(retrieved_data['date_of_appointment'])
-        tm = str(retrieved_data['time_slot'])
-        phone = str(retrieved_data['whatsapp_number'])
-
-        print('1')
+        # print('1')
 
 
-        whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
+        # index_number = getindex(retrieved_data['doctor_phone_id'],retrieved_data['time_slot'],xdate)
 
-        print('1')
+        # print('1')
 
-        return redirect(whatsapp_url)
+
+        # appointment.update_one({'_id': doc_id},{'$set':{'status':'success','pay_id':callback_data.get('razorpay_payment_id'),'appoint_number':appoint_number,'amount':fee,'appointment_index':index_number}})
+
+        # print('1')
+        # name = str(retrieved_data['patient_name'])
+        # payment_id = str(callback_data.get('razorpay_payment_id'))
+        # doa = str(retrieved_data['date_of_appointment'])
+        # tm = str(retrieved_data['time_slot'])
+        # phone = str(retrieved_data['whatsapp_number'])
+
+        # print('1')
+
+
+        # whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
+
+        # print('1')
+
+        return redirect("whatsapp://send?phone=+919646465003")
     else:
         # Payment failed or was not captured
         print("Payment failed or not captured!")
@@ -972,8 +976,46 @@ def razorpay_webhookupdated():
             if not retrieved_data:
                  return 'ok',200
 
+            result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":retrieved_data['date_of_appointment'],"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+            data_length = 1
+            if result:
+                data_length = len(result)+1
+
+            xdate = retrieved_data['date_of_appointment']
+            date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+            formatted_date = date_obj.strftime("%Y%m%d")
+
+            appoint_number = str(formatted_date)+'-'+str(data_length)
+
+            print('1')
+
+
+            dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+            fee = float(dxxocument.get('appointmentfee'))
+
+            print('1')
+
+
+            index_number = getindex(retrieved_data['doctor_phone_id'],retrieved_data['time_slot'],xdate)
+
+            print('1')
+
             doc_id = ObjectId(retrieved_data['_id'])
-            appointment.update_one({'_id': doc_id},{'$set':{'payment_status':'paid'}})
+            appointment.update_one({'_id': doc_id},{'$set':{'payment_status':'paid','status':'success','pay_id':payment["id"],'appoint_number':appoint_number,'amount':fee,'appointment_index':index_number}})
+
+            print('1')
+            name = str(retrieved_data['patient_name'])
+            payment_id = str(payment["id"])
+            doa = str(retrieved_data['date_of_appointment'])
+            tm = str(retrieved_data['time_slot'])
+            phone = str(retrieved_data['whatsapp_number'])
+
+            print('1')
+
+
+            whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
+
+            print('1')
 
             return jsonify({'status': 'success'}), 200
            
@@ -983,8 +1025,6 @@ def razorpay_webhookupdated():
         print("⚠️ Exception:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
     
-
-
 
 
 if __name__ == "__main__":

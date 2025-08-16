@@ -53,49 +53,47 @@ def send_payment_flow(from_number,name,date,slot,amount,link):
 
     formatted_date = datetime.strptime(date, "%Y-%m-%d").strftime("%d-%m-%Y")
 
-    # external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
-    # incoming_data = { 
-    #     "messaging_product": "whatsapp", 
-    #     "to": from_number, "type": "template", 
-    #     "template": { 
-    #         # "name": "razorpay_send_link_manual", 
-    #         "name": "razorpay_send_link_2", 
-    #         "language": { 
-    #             "code": "en" 
-    #         },
-    #         "components": [
-    #             {
-    #                 "type": "body",
-    #                 "parameters": [{
-    #                     "type": "text",
-    #                     "text": name
-    #                 },{
-    #                     "type": "text",
-    #                     "text": formatted_date
-    #                 },{
-    #                     "type": "text",
-    #                     "text": slot
-    #                 },{
-    #                     "type": "text",
-    #                     "text": amount
-    #                 }]
-    #             },
-    #             {
-    #             "type": "button",
-    #             "index": "0",
-    #             "sub_type": "url",
-    #             "parameters": [
-    #                 {
-    #                     "type": "text",
-    #                     "text": link
-    #                 }
-    #             ]}
-    #         ]} 
-    #     }
+    incoming_data = { 
+        "messaging_product": "whatsapp", 
+        "to": from_number, "type": "template", 
+        "template": { 
+            "name": "ulility_pay_now", 
+            "language": { 
+                "code": "en" 
+            },
+            "components": [
+                {
+                    "type": "header",
+                    "parameters":  []
 
-    # response = requests.post(external_url, json=incoming_data, headers=headers)
-    return pay_now_image(from_number,name,amount,formatted_date,slot,link)
+                },
+                 {
+        "type": "body",
+        "parameters": [ {
+                    "type": "text",
+                    "text": amount
+                }
+         
+        ]
+      }, {
+                "type": "button",
+                "index": "0",
+                "sub_type": "url",
+                "parameters": [
+                    {
+                        "type": "text",
+                        "text": link
+                    }
+                ]}
+
+            ]} 
+        }
+
+    response = requests.post(external_url, json=incoming_data, headers=headers)
+    return 'ok', 200
+    # return pay_now_image(from_number,name,amount,formatted_date,slot,link)
 
 # print(send_payment_flow('918959690512','name','date','slot','amount','link'))
 
@@ -883,7 +881,7 @@ def success_appointment(payment_id,appoint_no,name,doa,time,whatsapp_no):
         }
     
 
-    response = requests.post(url, json=payload, headers=headers)
+    # response = requests.post(url, json=payload, headers=headers)
 
     appoint_no = str(appoint_no)
 
@@ -1605,4 +1603,6 @@ def send_pdf_utility(from_number):
 
     response = requests.post(external_url, json=incoming_data, headers=headers)
     return "OK", 200
+
+
 
