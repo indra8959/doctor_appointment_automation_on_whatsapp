@@ -41,7 +41,7 @@ doctors = db["doctors"]
 appointment = db["appointment"] 
 templog = db["logs"] 
 disableslot = db["disableslot"] 
-
+vouchers = db["vouchers"] 
 API_KEY = "1234"
 
 
@@ -942,6 +942,7 @@ def payment_callback2(id):
         return jsonify({'status': 'failed', 'message': 'Payment failed or not captured'}), 400
 
 
+
 @app.route('/quick_razorpay_webhook', methods=['GET', 'POST'])
 def razorpay_webhookupdated():
     try:
@@ -989,6 +990,7 @@ def razorpay_webhookupdated():
 
             print('1')
 
+            
 
             dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
             fee = float(dxxocument.get('appointmentfee'))
@@ -1010,8 +1012,63 @@ def razorpay_webhookupdated():
             tm = str(retrieved_data['time_slot'])
             phone = str(retrieved_data['whatsapp_number'])
 
-            print('1')
 
+
+            try:
+                voucher_date = datetime.utcnow()
+                date_str = voucher_date.strftime("%Y-%m-%d")
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                start = datetime(date_obj.year, date_obj.month, date_obj.day)
+                end = start + timedelta(days=1)
+
+                count_txn = vouchers.count_documents({})
+                count = vouchers.count_documents({
+                    "voucher_type": "Receipt",
+                    "voucher_mode": "Bank",
+                    "date": {"$gte": start, "$lt": end}   # between start and end of day
+                })
+
+                voucher_number = "BRV-"+ str(date_str) +'-'+ str(count + 1)
+                voucher = {
+                    "voucher_number": voucher_number,
+                    "voucher_type": 'Receipt',
+                    "voucher_mode": "Bank",
+                    "txn": count_txn + 1,
+                    "doctor_id": retrieved_data['doctor_phone_id'],
+                    "from_id": phone,
+                    "to_id": payment_id,
+                    "date": datetime.utcnow(),
+                    "Payment_id": payment_id,
+                    "narration": 'Appointment Fee',
+                    "entries": [
+                {
+                "narration": "Appointment Fee",
+                "ledger_id": "A1",
+                "ledger_name": "Razorpay",
+                "debit": float(fee),
+                "credit": 0
+                },
+                {
+                "narration": "Appointment Fee",
+                "ledger_id": "A2",
+                "ledger_name": "Doctor Fee Payble",
+                "debit": 0,
+                "credit": float(fee)-20
+                },
+                {
+                "narration": "Appointment Fee",
+                "ledger_id": "A3",
+                "ledger_name": "Platform Fee",
+                "debit": 0,
+                "credit": 20
+                }
+                ],
+                    "created_by": "system",
+                    "created_at": datetime.utcnow()
+                }
+                vouchers.insert_one(voucher)
+            except:
+                print(2)
 
             whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
 
@@ -1025,6 +1082,173 @@ def razorpay_webhookupdated():
         print("⚠️ Exception:", str(e))
         return jsonify({'status': 'error', 'message': str(e)}), 500
     
+
+
+@app.route("/v1/vouchers", methods=["GET"])
+def get_vouchers_filtered():
+    from_date = request.args.get("from_date")  # e.g. 2025-08-01
+    to_date = request.args.get("to_date")      # e.g. 2025-08-30
+    voucher_type = request.args.get("voucher_type")  # optional
+    voucher_mode = request.args.get("voucher_mode")  # optional
+    
+    # Convert string → datetime
+    query = {}
+    if from_date and to_date:
+        start = datetime.strptime(from_date, "%Y-%m-%d")
+        end = datetime.strptime(to_date, "%Y-%m-%d")
+        # include till end of "to_date"
+        end = datetime(end.year, end.month, end.day, 23, 59, 59)
+        query["date"] = {"$gte": start, "$lte": end}
+    
+    if voucher_type:
+        query["voucher_type"] = voucher_type
+
+    if voucher_mode:
+        query["voucher_mode"] = voucher_mode
+    
+    
+    # Fetch vouchers
+    vouchers_list = list(vouchers.find(query))
+    
+    # Convert ObjectId to str
+    for v in vouchers_list:
+        v["_id"] = str(v["_id"])
+    
+    return jsonify(vouchers_list)
+
+
+@app.route('/v1/ledger/<ledger_id>', methods=['GET'])
+def get_ledger_entries(ledger_id):
+    # query params: ?from=2025-08-01&to=2025-08-30
+    from_date_str = request.args.get("from")
+    to_date_str = request.args.get("to")
+
+    try:
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d") if from_date_str else None
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d") if to_date_str else None
+    except Exception:
+        return jsonify({"error": "Invalid date format, use YYYY-MM-DD"}), 400
+
+    # Opening balance = all entries before from_date
+    opening_balance = 0
+    if from_date:
+        before_cursor = vouchers.find({"entries.ledger_id": ledger_id, "date": {"$lt": from_date}})
+        for doc in before_cursor:
+            for entry in doc.get("entries", []):
+                if entry.get("ledger_id") == ledger_id:
+                    opening_balance += (entry.get("debit", 0) - entry.get("credit", 0))
+
+    # Current period transactions
+    query = {"entries.ledger_id": ledger_id}
+    if from_date and to_date:
+        query["date"] = {"$gte": from_date, "$lte": to_date}
+    elif from_date:
+        query["date"] = {"$gte": from_date}
+    elif to_date:
+        query["date"] = {"$lte": to_date}
+
+
+    results = vouchers.find(query)
+
+    ledger_entries = []
+    for doc in results:
+        for entry in doc.get("entries", []):
+            if entry.get("ledger_id") == ledger_id:
+                ledger_entries.append({
+                    "voucher_number": doc.get("voucher_number"),
+                    "voucher_type": doc.get("voucher_type"),
+                    "voucher_mode": doc.get("voucher_mode"),
+                    "txn": doc.get("txn"),
+                    "ledger_id": entry.get("ledger_id"),
+                    "ledger_name": entry.get("ledger_name"),
+                    "credit": entry.get("credit"),
+                    "debit": entry.get("debit"),
+                    "narration": entry.get("narration"),
+                    "date": doc.get("date"),
+                })
+
+    return jsonify({
+        "ledger_id": ledger_id,
+        "opening_balance": opening_balance,
+        "transaction_count": len(ledger_entries),
+        "transactions": ledger_entries
+    })
+
+@app.route('/v1/doctor/<doctor_id>', methods=['GET'])
+def get_doctor_vouchers(doctor_id):
+    # query params: ?from=2025-08-01&to=2025-08-30
+    from_date_str = request.args.get("from")
+    to_date_str = request.args.get("to")
+
+    try:
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d") if from_date_str else None
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d") if to_date_str else None
+    except Exception:
+        return jsonify({"error": "Invalid date format, use YYYY-MM-DD"}), 400
+
+    # ===== Opening Balance Calculation =====
+    opening_debit, opening_credit = 0, 0
+    if from_date:
+        opening_query = {
+            "doctor_id": doctor_id,
+            "date": {"$lt": from_date}
+        }
+        prev_vouchers = vouchers.find(opening_query)
+        for doc in prev_vouchers:
+            for entry in doc.get("entries", []):
+                if entry.get("ledger_id") == "A2":
+                    opening_debit += entry.get("debit", 0)
+                    opening_credit += entry.get("credit", 0)
+
+    opening_balance = opening_debit - opening_credit
+
+    # ===== Current Period Transactions =====
+    query = {"doctor_id": doctor_id}
+    if from_date and to_date:
+        query["date"] = {"$gte": from_date, "$lte": to_date}
+    elif from_date:
+        query["date"] = {"$gte": from_date}
+    elif to_date:
+        query["date"] = {"$lte": to_date}
+
+    results = vouchers.find(query)
+
+    transactions = []
+    total_debit, total_credit = 0, 0
+
+    for doc in results:
+        for entry in doc.get("entries", []):
+            if entry.get("ledger_id") == "A2":   # ✅ only A2 ledger
+                transactions.append({
+                    "voucher_number": doc.get("voucher_number"),
+                    "voucher_type": doc.get("voucher_type"),
+                    "voucher_mode": doc.get("voucher_mode"),
+                    "doctor_id": doc.get("doctor_id"),
+                    "ledger_id": entry.get("ledger_id"),
+                    "ledger_name": entry.get("ledger_name"),
+                    "debit": entry.get("debit", 0),
+                    "credit": entry.get("credit", 0),
+                    "narration": entry.get("narration"),
+                    "date": doc.get("date"),
+                    "Payment_id": doc.get("Payment_id"),
+                })
+                total_debit += entry.get("debit", 0)
+                total_credit += entry.get("credit", 0)
+
+    closing_balance = opening_balance + (total_debit - total_credit)
+
+    return jsonify({
+        "doctor_id": doctor_id,
+        "ledger_id": "A2",
+        "opening_balance": opening_balance,
+        "period_debit": total_debit,
+        "period_credit": total_credit,
+        "closing_balance": closing_balance,
+        "transaction_count": len(transactions),
+        "transactions": transactions
+    })
+
+
 
 
 if __name__ == "__main__":
