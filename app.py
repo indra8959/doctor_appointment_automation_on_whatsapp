@@ -1015,7 +1015,7 @@ def razorpay_webhookupdated():
 
 
             try:
-                voucher_date = datetime.utcnow()
+                voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
                 date_str = voucher_date.strftime("%Y-%m-%d")
                 date_obj = datetime.strptime(date_str, "%Y-%m-%d")
                 start = datetime(date_obj.year, date_obj.month, date_obj.day)
@@ -1037,7 +1037,7 @@ def razorpay_webhookupdated():
                     "doctor_id": retrieved_data['doctor_phone_id'],
                     "from_id": phone,
                     "to_id": payment_id,
-                    "date": datetime.utcnow(),
+                    "date": datetime.now(ZoneInfo("Asia/Kolkata")),
                     "Payment_id": payment_id,
                     "narration": 'Appointment Fee',
                     "entries": [
@@ -1064,7 +1064,7 @@ def razorpay_webhookupdated():
                 }
                 ],
                     "created_by": "system",
-                    "created_at": datetime.utcnow()
+                    "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
                 }
                 vouchers.insert_one(voucher)
             except:
