@@ -1015,6 +1015,12 @@ def razorpay_webhookupdated():
 
 
             try:
+
+                # Current time in UTC (GMT)
+                utc_now = datetime.now(ZoneInfo("UTC"))
+                ist_now = utc_now.astimezone(ZoneInfo("Asia/Kolkata"))
+
+                
                 voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
                 date_str = voucher_date.strftime("%Y-%m-%d")
                 date_obj = datetime.strptime(date_str, "%Y-%m-%d")
@@ -1030,6 +1036,7 @@ def razorpay_webhookupdated():
 
                 voucher_number = "BRV-"+ str(date_str) +'-'+ str(count + 1)
                 voucher = {
+                    "amount":float(fee),
                     "voucher_number": voucher_number,
                     "voucher_type": 'Receipt',
                     "voucher_mode": "Bank",
@@ -1064,7 +1071,7 @@ def razorpay_webhookupdated():
                 }
                 ],
                     "created_by": "system",
-                    "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
+                    "created_at": ist_now
                 }
                 vouchers.insert_one(voucher)
             except:
