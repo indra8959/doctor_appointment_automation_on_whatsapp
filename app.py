@@ -1090,6 +1090,66 @@ def razorpay_webhookupdated():
         return jsonify({'status': 'error', 'message': str(e)}), 500
     
 
+@app.route("/doctor-payment", methods=["POST"])
+def v1_doctor_payment():
+    try:
+        data = request.json
+        doctorId = data.get("doctorId")
+        fee = data.get("amount")
+        payment_id = data.get("paymentId")
+        ledgerCode = data.get("ledgerCode")
+        ledgerName = data.get("ledgerName")
+
+        voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
+        date_str = voucher_date.strftime("%Y-%m-%d")
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        start = datetime(date_obj.year, date_obj.month, date_obj.day)
+        end = start + timedelta(days=1)
+
+        count_txn = vouchers.count_documents({})
+        count = vouchers.count_documents({
+                    "voucher_type": "Payment",
+                    "voucher_mode": "Bank",
+                    "date": {"$gte": start, "$lt": end}   # between start and end of day
+        })
+
+        voucher_number = "BPV-"+ str(date_str) +'-'+ str(count + 1)
+        voucher = {
+                    "voucher_number": voucher_number,
+                    "voucher_type": 'Payment',
+                    "voucher_mode": "Bank",
+                    "txn": count_txn + 1,
+                    "doctor_id": doctorId,
+                    "from_id": "admin",
+                    "to_id": doctorId,
+                    "date": datetime.now(ZoneInfo("Asia/Kolkata")),
+                    "Payment_id": payment_id,
+                    "narration": 'Doctor Payment',
+                    "amount":float(fee),
+                    "entries": [
+                {
+                "narration": "Doctor Payment",
+                "ledger_id": "A2",
+                "ledger_name": "Doctor Fee Payble",
+                "debit": float(fee),
+                "credit": 0
+                },
+                {
+                "narration": "Doctor Payment",
+                "ledger_id": ledgerCode,
+                "ledger_name": ledgerName,
+                "debit": 0,
+                "credit": float(fee)
+                }
+                ],
+                    "created_by": "system",
+                    "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
+                }
+        vouchers.insert_one(voucher)
+        return jsonify({"status": "ok","voucherCode":voucher_number,"txn":count_txn + 1}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/v1/vouchers", methods=["GET"])
 def get_vouchers_filtered():
