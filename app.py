@@ -578,7 +578,22 @@ def get_appointment_list():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
+@app.route("/get_appointments/<string:date>", methods=["GET"])
+def get_appointment_list_by_date(date):
+    try:
+        documents = list(appointment.find({"date_of_appointment": date}))
+        if not documents:
+            return jsonify({"error": "No appointments found"}), 404
 
+        # Convert ObjectId to string for JSON response
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+
+        return jsonify(documents), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
 @app.route("/login", methods=["POST"])
 def login():
