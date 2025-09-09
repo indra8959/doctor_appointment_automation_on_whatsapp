@@ -42,6 +42,7 @@ appointment = db["appointment"]
 templog = db["logs"] 
 disableslot = db["disableslot"] 
 vouchers = db["vouchers"] 
+patient = db["patient"] 
 API_KEY = "1234"
 
 
@@ -1316,6 +1317,162 @@ def get_doctor_vouchers(doctor_id):
     })
 
 
+
+@app.route("/add_description/<string:doctorId>", methods=["GET", "POST"])
+def add_description(doctorId):
+    try:
+        if request.method == "POST":
+            data = request.get_json()
+
+            if not data:
+                return jsonify({"status": "error", "message": "No data provided"}), 400
+
+            # Case 1: Single product (dict)
+            if isinstance(data, dict):
+                doctors.update_one(
+                    {"_id": ObjectId(doctorId)},
+                    {"$set": {"products": [data]}}  # wrap into list
+                )
+
+            # Case 2: Multiple products (list)
+            elif isinstance(data, list):
+                doctors.update_one(
+                    {"_id": ObjectId(doctorId)},
+                    {"$set": {"products": data}}
+                )
+
+            else:
+                return jsonify({"status": "error", "message": "Invalid data format"}), 400
+
+            return jsonify({
+                "status": "success",
+                "message": "Product(s) updated successfully"
+            }), 200
+
+        # -------- GET: Fetch products --------
+        doctor = doctors.find_one({"_id": ObjectId(doctorId)})
+
+        if not doctor:
+            return jsonify({"status": "error", "message": "Doctor not found"}), 404
+
+        products = doctor.get("products", [])
+        return jsonify(products), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+@app.route("/patient", methods=["GET", "POST"])
+def patient_api():
+    try:
+        if request.method == "POST":
+            # -------- Add patient --------
+            data = request.get_json()
+
+            if not data:
+                return jsonify({"status": "error", "message": "No data provided"}), 400
+
+            insert_id = appointment.insert_one(data).inserted_id
+
+            return jsonify({
+                "status": "success",
+                "message": "Patient added successfully",
+                "patient_id": str(insert_id)
+            }), 201
+
+        else:
+            # -------- Get patients --------
+            patients = list(patient.find())
+            for p in patients:
+                p["_id"] = str(p["_id"])  # convert ObjectId to string
+
+            return jsonify({
+                "status": "success",
+                "count": len(patients),
+                "patients": patients
+            }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+@app.route("/patient_bill", methods=["GET", "POST"])
+def patient_bill_api():
+    try:
+        if request.method == "POST":
+            # -------- Add patient --------
+            data = request.get_json()
+
+            if not data:
+                return jsonify({"status": "error", "message": "No data provided"}), 400
+
+            insert_id = patient.insert_one(data).inserted_id
+
+            return jsonify({
+                "status": "success",
+                "message": "Patient added successfully",
+                "patient_id": str(insert_id)
+            }), 201
+
+        else:
+            # -------- Get patients --------
+            patients = list(patient.find())
+            for p in patients:
+                p["_id"] = str(p["_id"])  # convert ObjectId to string
+
+            return jsonify({
+                "status": "success",
+                "count": len(patients),
+                "patients": patients
+            }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+@app.route("/patient_bill_update/<string:patient_id>", methods=["POST"])
+def update_patient_bill(patient_id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "No update data provided"}), 400
+
+        # MongoDB ObjectId में convert
+        from bson import ObjectId
+        query = {"_id": ObjectId(patient_id)}
+
+        # Update patient details
+        result = patient.update_one(query, {"$set": {'brackup':data}})
+
+        if result.matched_count == 0:
+            return jsonify({"status": "error", "message": "Patient not found"}), 404
+
+        return jsonify({
+            "status": "success",
+            "message": "Patient updated successfully",
+            "patient_id": patient_id
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
+@app.route("/api/patients", methods=["GET"])
+def get_patients_search():
+    search = request.args.get("search", "")
+    results = list(appointment.find(
+        {"patient_name": {"$regex": search, "$options": "i"}}
+    ).limit(10))
+
+    # Convert ObjectId to string
+    for r in results:
+        r["_id"] = str(r["_id"])
+
+    return jsonify(results)
 
 
 if __name__ == "__main__":
