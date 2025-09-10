@@ -1490,6 +1490,164 @@ def get_patients_search():
     return jsonify(results)
 
 
+
+
+
+
+
+@app.route("/multiple_payment_doctor", methods=["GET"])
+def get_multiple_doctor():
+    # Use doctor_collection for DB
+    doctor_collection = doctors  
+
+    # Fetch all doctors
+    doctor_list = list(doctor_collection.find({"role": "doctor"}))  
+
+    doctorpaymentlist = []
+
+    from_date_str = request.args.get("from")
+    to_date_str = request.args.get("to")
+
+    try:
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d") if from_date_str else None
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d") if to_date_str else None
+    except Exception:
+        return jsonify({"error": "Invalid date format, use YYYY-MM-DD"}), 400
+
+    for doctor in doctor_list:
+        doctor_id = str(doctor["_id"])  # keep Mongo _id safe for JSON
+
+        # ===== Opening Balance Calculation =====
+        opening_debit, opening_credit = 0, 0
+        if from_date:
+            opening_query = {"doctor_id": doctor_id, "date": {"$lt": from_date}}
+            prev_vouchers = vouchers.find(opening_query)
+            for doc in prev_vouchers:
+                for entry in doc.get("entries", []):
+                    if entry.get("ledger_id") == "A2":
+                        opening_debit += entry.get("debit", 0)
+                        opening_credit += entry.get("credit", 0)
+
+        opening_balance = opening_debit - opening_credit
+
+        # ===== Current Period Transactions =====
+        query = {"doctor_id": doctor_id}
+        if from_date and to_date:
+            query["date"] = {"$gte": from_date, "$lte": to_date}
+        elif from_date:
+            query["date"] = {"$gte": from_date}
+        elif to_date:
+            query["date"] = {"$lte": to_date}
+
+        results = vouchers.find(query)
+
+        transactions, total_debit, total_credit = [], 0, 0
+
+        for doc in results:
+            for entry in doc.get("entries", []):
+                if entry.get("ledger_id") == "A2":
+                    transactions.append({
+                        "voucher_number": doc.get("voucher_number"),
+                        "voucher_type": doc.get("voucher_type"),
+                        "voucher_mode": doc.get("voucher_mode"),
+                        "doctor_id": doc.get("doctor_id"),
+                        "ledger_id": entry.get("ledger_id"),
+                        "ledger_name": entry.get("ledger_name"),
+                        "debit": entry.get("debit", 0),
+                        "credit": entry.get("credit", 0),
+                        "narration": entry.get("narration"),
+                        "date": doc.get("date"),
+                        "Payment_id": doc.get("Payment_id"),
+                    })
+                    total_debit += entry.get("debit", 0)
+                    total_credit += entry.get("credit", 0)
+
+        closing_balance = opening_balance + (total_debit - total_credit)
+
+        doctorpaymentlist.append({
+            "doctor_id": doctor_id,
+            "doctor_name": doctor['name'],
+            "phone_number": doctor['phone'],
+            "ledger_id": "A2",
+            "opening_balance": opening_balance,
+            "period_debit": total_debit,
+            "period_credit": total_credit,
+            "closing_balance": closing_balance,
+            "transaction_count": len(transactions),
+            "transactions": transactions
+        })
+
+    return jsonify(doctorpaymentlist)
+
+
+
+
+@app.route("/multiple_doctor-payment", methods=["POST"])
+def v1_m_doctor_payment():
+    try:
+        datas = request.json
+
+        for data in datas:
+            doctorId = data.get("doctorId")
+            fee = data.get("amount")
+            payment_id = data.get("paymentId")
+            ledgerCode = data.get("ledgerCode")
+            ledgerName = data.get("ledgerName")
+
+            voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
+            date_str = voucher_date.strftime("%Y-%m-%d")
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            start = datetime(date_obj.year, date_obj.month, date_obj.day)
+            end = start + timedelta(days=1)
+
+            count_txn = vouchers.count_documents({})
+            count = vouchers.count_documents({
+                        "voucher_type": "Payment",
+                        "voucher_mode": "Bank",
+                        "date": {"$gte": start, "$lt": end}   # between start and end of day
+            })
+
+            voucher_number = "BPV-"+ str(date_str) +'-'+ str(count + 1)
+            voucher = {
+                        "voucher_number": voucher_number,
+                        "voucher_type": 'Payment',
+                        "voucher_mode": "Bank",
+                        "txn": count_txn + 1,
+                        "doctor_id": doctorId,
+                        "from_id": "admin",
+                        "to_id": doctorId,
+                        "date": datetime.now(ZoneInfo("Asia/Kolkata")),
+                        "Payment_id": payment_id,
+                        "narration": 'Doctor Payment',
+                        "amount":float(fee),
+                        "entries": [
+                    {
+                    "narration": "Doctor Payment",
+                    "ledger_id": "A2",
+                    "ledger_name": "Doctor Fee Payble",
+                    "debit": float(fee),
+                    "credit": 0
+                    },
+                    {
+                    "narration": "Doctor Payment",
+                    "ledger_id": ledgerCode,
+                    "ledger_name": ledgerName,
+                    "debit": 0,
+                    "credit": float(fee)
+                    }
+                    ],
+                        "created_by": "system",
+                        "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
+                    }
+            vouchers.insert_one(voucher)
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
 if __name__ == "__main__":
     app.run(port=5000,host="0.0.0.0")
 
