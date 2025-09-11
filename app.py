@@ -20,11 +20,12 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 # import requests
 # from requests.auth import HTTPBasicAuth
-
+from api_files.create_ledger import accounting_bp
 
 app = Flask(__name__)
 CORS(app)
 
+app.register_blueprint(accounting_bp, url_prefix="/accounting")
 # razorpay
 
 
@@ -1639,6 +1640,183 @@ def v1_m_doctor_payment():
                         "created_by": "system",
                         "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
                     }
+            vouchers.insert_one(voucher)
+        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+@app.route("/get_appointments", methods=["GET"])
+def get_appointments_by_range():
+    try:
+        # Query parameters: /get_appointments?from=2025-09-01&to=2025-09-10
+        from_date = request.args.get("from")
+        to_date = request.args.get("to")
+
+        if not from_date or not to_date:
+            return jsonify({"error": "Please provide both 'from' and 'to' date"}), 400
+
+        # MongoDB query for range
+        documents = list(
+            appointment.find({
+                "date_of_appointment": {"$gte": from_date, "$lte": to_date},"status":"success"
+            })
+        )
+
+        if not documents:
+            return jsonify({"error": "No appointments found"}), 404
+
+        # Convert ObjectId to string
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+
+        return jsonify(documents), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/doctor_dropdown", methods=["GET"])
+def doctor_dropdown():
+    try:
+        # ✅ Only fetch _id and name fields
+        documents = list(doctors.find(
+            {"role": "doctor"},
+            {"_id": 1, "name": 1}   # projection
+        ))
+
+        if not documents:
+            return jsonify({"error": "No doctors found"}), 404
+
+        # Convert ObjectId to string
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+
+        return jsonify(documents), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/doctor_list", methods=["GET"])
+def doctor_list():
+    try:
+        # ✅ Only fetch _id and name fields
+        documents = list(doctors.find(
+            {"role": "doctor"}  # projection
+        ))
+
+        if not documents:
+            return jsonify({"error": "No doctors found"}), 404
+
+        # Convert ObjectId to string
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+
+        return jsonify(documents), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/get_doctor/<string:id>/", methods=["GET"])
+def get_doctor(id):
+    try:
+        try:
+            doc_id = ObjectId(id)
+        except:
+            return jsonify({"error": "Invalid ObjectId"}), 400
+        document = doctors.find_one({"_id": doc_id})
+        if not document:
+            return jsonify({"error": "User not found"}), 404
+        document["_id"] = str(document["_id"])
+        return jsonify(document), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+
+
+def transform_entry(entry):
+                if not entry.get("fee") or entry["fee"] == 0:
+                    return []
+                pid = entry["Payment_id"]
+                return [
+                    {
+                        "Payment_id": pid,
+                        "narration": pid,
+                        "ledger_id": "A1",
+                        "ledger_name": "Razorpay",
+                        "debit": 0,
+                        "credit": entry["fee"]
+                    },
+                    {
+                        "Payment_id": pid,
+                        "narration": pid,
+                        "ledger_id": "A8",
+                        "ledger_name": "Input Tax Credit",
+                        "debit": entry["tax"],
+                        "credit": 0
+                    },
+                    {
+                        "Payment_id": pid,
+                        "narration": pid,
+                        "ledger_id": "A7",
+                        "ledger_name": "Gateway Expenses",
+                        "debit": entry["gataway_charges"],
+                        "credit": 0
+                    }
+                ]
+
+@app.route("/excel_razorpay_tax", methods=["POST"])
+def v1_excel_razorpay_tax():
+    try:
+        datas = request.json
+
+        for data in datas:
+
+            doctorId = 'system'
+            payment_id = 'system'
+
+            voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
+            date_str = voucher_date.strftime("%Y-%m-%d")
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            start = datetime(date_obj.year, date_obj.month, date_obj.day)
+            end = start + timedelta(days=1)
+
+            count_txn = vouchers.count_documents({})
+            count = vouchers.count_documents({
+                        "voucher_type": "Journal",
+                        "voucher_mode": "Bank",
+                        "date": {"$gte": start, "$lt": end}   
+            })
+
+            voucher_number = "JRV-"+ str(date_str) +'-'+ str(count + 1)
+
+            dt = datetime.strptime(data["date"], "%Y-%m-%d")
+            dt = dt.replace(hour=2, minute=0, second=13, microsecond=645000, tzinfo=ZoneInfo("Asia/Kolkata"))
+
+# ✅ keep as datetime object
+            data["date"] = dt
+
+            voucher = {
+                "date": data["date"],
+                "amount": data["amount"],
+                "voucher_number": voucher_number,
+                "voucher_type": 'Journal',
+                "voucher_mode": "Bank",
+                "txn": count_txn + 1,
+                "doctor_id": doctorId,
+                "from_id": "admin",
+                "to_id": doctorId,
+                "Payment_id": payment_id,
+                "narration": 'Razorpay Tax',
+                "created_by": "system",
+                "created_at": datetime.now(ZoneInfo("Asia/Kolkata")),
+                "entries": [e for entry in data["entries"] for e in transform_entry(entry)]
+            }
+
+            # print(voucher)
             vouchers.insert_one(voucher)
         return jsonify({"status": "ok"}), 200
     except Exception as e:
