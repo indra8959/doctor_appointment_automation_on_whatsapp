@@ -1481,7 +1481,7 @@ def update_patient_bill(patient_id):
 def get_patients_search():
     search = request.args.get("search", "")
     results = list(appointment.find(
-        {"patient_name": {"$regex": search, "$options": "i"}}
+        {"whatsapp_number": {"$regex": search, "$options": "i"}}
     ).limit(10))
 
     # Convert ObjectId to string
