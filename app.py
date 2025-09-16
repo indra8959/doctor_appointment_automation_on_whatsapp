@@ -890,6 +890,48 @@ def razorpay_webhook():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@app.route("/login-kk", methods=["POST"])
+def loginss():
+    try:
+        data = request.json or {}
+        username = data.get("username")
+        password = data.get("password")
+
+        if not username or not password:
+            return jsonify({"error": "Username and password are required"}), 400
+
+        # Find user by email or phone
+        user = doctors.find_one({"$or": [{"email": username}, {"phone": username}]})
+
+        if not user:
+            return jsonify({"error": "Invalid username or password"}), 401
+
+        # Verify password (⚠️ using plain-text is risky, better use bcrypt)
+        if user.get("password") != password:
+            return jsonify({"error": "Invalid username or password"}), 401
+
+        # Prepare base response
+        response = {
+            "message": "Login successful",
+            "role": user.get("role", "doctor"),
+            "user": str(user["_id"]),
+            "accessToken": user.get("accessToken", ""),
+            "phonenumberID": user.get("phonenumberID", "")
+        }
+
+        # Extra fields for staff
+        if user.get("role") == "staff":
+            response.update({
+                "staffId": str(user.get("EmpID", "")),
+                "doctorId": str(user.get("doctorId", ""))
+            })
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 
 @app.route('/payment_callback2/<string:id>/', methods=['GET', 'POST'])
 def payment_callback2(id):
