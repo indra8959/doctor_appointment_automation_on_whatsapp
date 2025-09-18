@@ -1466,6 +1466,10 @@ def patient_bill_api():
             if not data:
                 return jsonify({"status": "error", "message": "No data provided"}), 400
 
+            last_patient = patient.find_one(sort=[("id", -1)])
+            new_id = (last_patient["id"] + 1) if last_patient else 4101
+            data.update({"id": new_id})
+
             insert_id = patient.insert_one(data).inserted_id
 
             return jsonify({
