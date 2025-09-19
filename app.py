@@ -1469,7 +1469,7 @@ def patient_bill_api():
             last_patient = patient.find_one(sort=[("id", -1)])
             new_id = (last_patient["id"] + 1) if last_patient else 4101
             data.update({"id": new_id})
-
+            
             insert_id = patient.insert_one(data).inserted_id
 
             return jsonify({
@@ -1479,10 +1479,25 @@ def patient_bill_api():
             }), 201
 
         else:
-            # -------- Get patients --------
-            patients = list(patient.find())
+            from_date = request.args.get("from_date")
+            to_date = request.args.get("to_date")
+
+            query = {}
+            if from_date and to_date:
+                try:
+                    # Dates ko proper format me convert karo
+                    # start = datetime.strptime(from_date, "%Y-%m-%d")
+                    # end = datetime.strptime(to_date, "%Y-%m-%d")
+
+                    # MongoDB query banani
+                    query["date"] = {"$gte": from_date, "$lte": to_date}
+
+                except ValueError:
+                    return jsonify({"status": "error", "message": "Invalid date format. Use YYYY-MM-DD"}), 400
+
+            patients = list(patient.find(query))
             for p in patients:
-                p["_id"] = str(p["_id"])  # convert ObjectId to string
+                p["_id"] = str(p["_id"])
 
             return jsonify({
                 "status": "success",
@@ -1492,7 +1507,6 @@ def patient_bill_api():
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
 
 
 @app.route("/patient_bill_update/<string:patient_id>", methods=["POST"])
