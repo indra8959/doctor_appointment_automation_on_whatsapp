@@ -1551,6 +1551,19 @@ def get_patients_search():
     return jsonify(results)
 
 
+@app.route("/get_patient_bill_reciept_number", methods=["GET"])
+def get_patient_bill_reciept_number():
+    try:
+        last_patient = patient.find_one(sort=[("id", -1)])
+        new_id = (last_patient["id"] + 1) if last_patient else 4101
+        return jsonify({
+                "status": "success",
+                "patient_id": str(new_id)
+        }), 201
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 
 
