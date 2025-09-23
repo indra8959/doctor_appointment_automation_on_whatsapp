@@ -351,9 +351,9 @@ def find_user():
 @app.route("/add_user", methods=["POST"])
 def add_user_query():
     try:
-        api_key = request.headers.get("x-api-key")
-        if api_key != API_KEY:
-            return jsonify({"error": "Unauthorized"}), 401
+        # api_key = request.headers.get("x-api-key")
+        # if api_key != API_KEY:
+        #     return jsonify({"error": "Unauthorized"}), 401
         data = request.json
         # password = data.get("password")
         # hashed_password = generate_password_hash(password)
@@ -366,9 +366,9 @@ def add_user_query():
 @app.route("/slot_disable", methods=["POST"])
 def slot_disable():
     try:
-        api_key = request.headers.get("x-api-key")
-        if api_key != API_KEY:
-            return jsonify({"error": "Unauthorized"}), 401
+        # api_key = request.headers.get("x-api-key")
+        # if api_key != API_KEY:
+        #     return jsonify({"error": "Unauthorized"}), 401
         data = request.json
 
         input_str = data.get("date")+data.get("slot")
@@ -404,9 +404,9 @@ def slot_disable():
 @app.route("/get_slot", methods=["POST"])
 def get_slot():
     try:
-        api_key = request.headers.get("x-api-key")
-        if not api_key or api_key != API_KEY:
-            return jsonify({"error": "Unauthorized"}), 401
+        # api_key = request.headers.get("x-api-key")
+        # if not api_key or api_key != API_KEY:
+        #     return jsonify({"error": "Unauthorized"}), 401
         # Fetch all appointments and convert ObjectId to string
         documents = list(disableslot.find({}))
         if not documents:
@@ -422,9 +422,9 @@ def get_slot():
 @app.route("/get_refund_report", methods=["POST"])
 def refund_report():
     try:
-        api_key = request.headers.get("x-api-key")
-        if not api_key or api_key != API_KEY:
-            return jsonify({"error": "Unauthorized"}), 401
+        # api_key = request.headers.get("x-api-key")
+        # if not api_key or api_key != API_KEY:
+        #     return jsonify({"error": "Unauthorized"}), 401
 
         data = request.json
         doctor_id = '67ee5e1bde4cb48c515073ee'
@@ -506,9 +506,9 @@ def refund_report():
 @app.route("/update_user/<string:id>/", methods=["POST"])
 def update_user_query(id):
     try:
-        api_key = request.headers.get("x-api-key")
-        if api_key != API_KEY:
-            return jsonify({"error": "Unauthorized"}), 401
+        # api_key = request.headers.get("x-api-key")
+        # if api_key != API_KEY:
+        #     return jsonify({"error": "Unauthorized"}), 401
         data = request.json
         try:
             doc_id = ObjectId(id)
