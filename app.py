@@ -6,7 +6,7 @@ import time
 import json
 # import datetime
 from receipt import receiptme
-from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name,send_selection,send_selection_enroll, send_pdf_utility, appointment_flow_expire
+from appoint_flow import book_appointment, sendthankyou, appointment_flow, success_appointment,old_user_send,custom_appointment_flow,same_name,send_selection,send_selection_enroll, send_pdf_utility, appointment_flow_expire,send_payment_flow
 from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
@@ -1892,6 +1892,209 @@ def v1_excel_razorpay_tax():
             # print(voucher)
             vouchers.insert_one(voucher)
         return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+from razorpay import pay_link
+
+@app.route("/book_appointment_current_opd", methods=["POST"])
+def book_appointment_current_opd():
+    try:
+        data = request.get_json()
+
+        name = data.get("name")
+        pname = data.get("fatherName")
+        date = data.get("appointmentDate")
+        slot = data.get("timeSlot")
+        doctor_id = data.get("doctor_phone_id")
+        email = data.get("email")
+        symptoms = data.get("symptoms")
+        age = data.get("age")
+        timestamp = data.get("timestamp")
+        from_number = "91" + data.get("mobile") if len(data.get("mobile")) == 10 else data.get("mobile")
+        dob = data.get("dob")
+        city = data.get("city")
+        address = data.get("address")
+        vaccine = data.get("isVaccination")
+
+        if data.get("paymentMode")=='Online':
+
+            dataset = {
+            'patient_name': name,
+            'guardian_name': pname,
+            'date_of_appointment': date,
+            'time_slot': slot,
+            'doctor_phone_id':doctor_id,
+            'email' : email,
+            'symptoms' : symptoms,
+            'age' : age,
+            'timestamp' : timestamp,
+            'whatsapp_number' : from_number,
+            'date_of_birth' : dob,
+            'city' : city,
+            'address' : address,
+            'role':'appointment',
+            'status':'created',
+            "createdAt": 'x',
+            "vaccine":vaccine
+                }
+        
+            id = str(appointment.insert_one(dataset).inserted_id)
+            print(id)
+
+            dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+            fee = float(dxxocument.get('appointmentfee'))
+            # paymentlink = dxxocument.get('paymentlink')
+
+            tempdata = {"number":from_number,"current_id":id,"_id":from_number}
+            try:
+                templog.insert_one(tempdata)
+            except:
+                templog.update_one({'_id': from_number}, {'$set': tempdata})
+
+            admin = db["admin"] 
+            dxocument = admin.find_one({'_id':ObjectId('67ee6000fd6181e38ec1181c')})
+            razorpayid = dxocument.get('razorpayid')
+            razorpaykey = dxocument.get('razorpaykey')
+
+            link = pay_link(name,from_number,'care2connect.cc@gmail.com',id,fee,razorpayid,razorpaykey)
+
+            # link = paymentlink
+            print(link)
+            amount = fee
+            return send_payment_flow(from_number,name,date,slot,amount,link)
+        
+        else:
+
+            dataset = {
+            'patient_name': name,
+            'guardian_name': pname,
+            'date_of_appointment': date,
+            'time_slot': slot,
+            'doctor_phone_id':doctor_id,
+            'email' : email,
+            'symptoms' : symptoms,
+            'age' : age,
+            'timestamp' : timestamp,
+            'whatsapp_number' : from_number,
+            'date_of_birth' : dob,
+            'city' : city,
+            'address' : address,
+            'role':'appointment',
+            'status':'created',
+            "createdAt": 'x',
+            "vaccine":vaccine,
+            'razorpay_url': 'Offline Transaction',
+            'payment_status':'Cash'
+                }
+            
+        
+            
+
+            retrieved_data = dataset
+
+            if not retrieved_data:
+                 return jsonify({'success':2}),200
+
+            result = list(appointment.find({"doctor_phone_id": retrieved_data['doctor_phone_id'], "date_of_appointment":retrieved_data['date_of_appointment'],"amount":{"$gt": -1}}, {"_id": 0}))  # Convert cursor to list
+            data_length = 1
+            if result:
+                data_length = len(result)+1
+
+            xdate = retrieved_data['date_of_appointment']
+            date_obj = datetime.strptime(xdate, "%Y-%m-%d")
+            formatted_date = date_obj.strftime("%Y%m%d")
+
+            appoint_number = str(formatted_date)+'-'+str(data_length)
+
+            print('1')
+
+            
+
+            dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
+            fee = float(dxxocument.get('otcfee'))
+
+            print('1')
+
+
+            index_number = getindex(retrieved_data['doctor_phone_id'],retrieved_data['time_slot'],xdate)
+
+            print('1')
+
+            dataset.update({'payment_status':'paid','status':'success','pay_id':'offline','appoint_number':appoint_number,'amount':fee,'appointment_index':index_number})
+
+            id = str(appointment.insert_one(dataset).inserted_id)
+            print(id)
+
+            print('1')
+            name = str(retrieved_data['patient_name'])
+            payment_id = 'Cash'
+            doa = str(retrieved_data['date_of_appointment'])
+            tm = str(retrieved_data['time_slot'])
+            phone = str(retrieved_data['whatsapp_number'])
+
+
+
+            try:
+                voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
+                date_str = voucher_date.strftime("%Y-%m-%d")
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                start = datetime(date_obj.year, date_obj.month, date_obj.day)
+                end = start + timedelta(days=1)
+
+                count_txn = vouchers.count_documents({})
+                count = vouchers.count_documents({
+                    "voucher_type": "Receipt",
+                    "voucher_mode": "Cash",
+                    "date": {"$gte": start, "$lt": end}   # between start and end of day
+                })
+
+                voucher_number = "CRV-"+ str(date_str) +'-'+ str(count + 1)
+                voucher = {
+                    "voucher_number": voucher_number,
+                    "voucher_type": 'Receipt',
+                    "voucher_mode": "Cash",
+                    "txn": count_txn + 1,
+                    "doctor_id": retrieved_data['doctor_phone_id'],
+                    "from_id": phone,
+                    "to_id": payment_id,
+                    "date": datetime.now(ZoneInfo("Asia/Kolkata")),
+                    "Payment_id": payment_id,
+                    "narration": 'Appointment Fee',
+                    "amount":float(fee),
+                    "entries": [
+                {
+                "narration": "Appointment Fee",
+                "ledger_id": "A11",
+                "ledger_name": "OTC Fee Receivable",
+                "debit": 0,
+                "credit": float(fee)
+                },
+                {
+                "narration": "Appointment Fee",
+                "ledger_id": "A9",
+                "ledger_name": "OTC Fee",
+                "debit": float(fee),
+                "credit": 0
+                }
+                
+                ],
+                    "created_by": "system",
+                    "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
+                }
+                vouchers.insert_one(voucher)
+            except:
+                print(2)
+
+            # whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
+
+            return jsonify({'appoint_number':appoint_number,'appointment_index':index_number,'date_of_appointment': date,
+            'time_slot': slot}), 201
+
+
+            
+
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
