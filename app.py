@@ -1916,10 +1916,12 @@ def book_appointment_current_opd():
         city = data.get("city")
         address = data.get("address")
         vaccine = data.get("isVaccination")
-
+        sex = data.get("sex")
+        
         if data.get("paymentMode")=='Online':
 
             dataset = {
+            'sex':sex,
             'patient_name': name,
             'guardian_name': pname,
             'date_of_appointment': date,
@@ -1967,6 +1969,7 @@ def book_appointment_current_opd():
         else:
 
             dataset = {
+            'sex':sex,
             'patient_name': name,
             'guardian_name': pname,
             'date_of_appointment': date,
