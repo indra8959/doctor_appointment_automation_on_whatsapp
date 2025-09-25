@@ -1860,7 +1860,7 @@ def v1_excel_razorpay_tax():
             count_txn = vouchers.count_documents({})
             count = vouchers.count_documents({
                         "voucher_type": "Journal",
-                        "voucher_mode": "Bank",
+                        "voucher_mode": "Journal",
                         "date": {"$gte": start, "$lt": end}   
             })
 
@@ -1877,7 +1877,7 @@ def v1_excel_razorpay_tax():
                 "amount": data["amount"],
                 "voucher_number": voucher_number,
                 "voucher_type": 'Journal',
-                "voucher_mode": "Bank",
+                "voucher_mode": "Journal",
                 "txn": count_txn + 1,
                 "doctor_id": doctorId,
                 "from_id": "admin",
@@ -2016,6 +2016,7 @@ def book_appointment_current_opd():
 
             dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
             fee = float(dxxocument.get('otcfee'))
+            xfee = float(dxxocument.get('appointmentfee'))
 
             print('1')
 
@@ -2024,7 +2025,7 @@ def book_appointment_current_opd():
 
             print('1')
 
-            dataset.update({'payment_status':'paid','status':'success','pay_id':'offline','appoint_number':appoint_number,'amount':fee,'appointment_index':index_number})
+            dataset.update({'payment_status':'paid','status':'success','pay_id':'offline','appoint_number':appoint_number,'amount':xfee,'appointment_index':index_number})
 
             id = str(appointment.insert_one(dataset).inserted_id)
             print(id)
@@ -2047,38 +2048,38 @@ def book_appointment_current_opd():
 
                 count_txn = vouchers.count_documents({})
                 count = vouchers.count_documents({
-                    "voucher_type": "Receipt",
-                    "voucher_mode": "Cash",
+                    "voucher_type": "Journal",
+                    "voucher_mode": "Journal",
                     "date": {"$gte": start, "$lt": end}   # between start and end of day
                 })
 
-                voucher_number = "CRV-"+ str(date_str) +'-'+ str(count + 1)
+                voucher_number = "JRV-"+ str(date_str) +'-'+ str(count + 1)
                 voucher = {
                     "voucher_number": voucher_number,
-                    "voucher_type": 'Receipt',
-                    "voucher_mode": "Cash",
+                    "voucher_type": 'Journal',
+                    "voucher_mode": "Journal",
                     "txn": count_txn + 1,
                     "doctor_id": retrieved_data['doctor_phone_id'],
                     "from_id": phone,
                     "to_id": payment_id,
                     "date": datetime.now(ZoneInfo("Asia/Kolkata")),
                     "Payment_id": payment_id,
-                    "narration": 'Appointment Fee',
+                    "narration": 'Platform Fee',
                     "amount":float(fee),
                     "entries": [
                 {
-                "narration": "Appointment Fee",
+                "narration": "Platform Fee",
                 "ledger_id": "A11",
                 "ledger_name": "OTC Fee Receivable",
-                "debit": 0,
-                "credit": float(fee)
-                },
-                {
-                "narration": "Appointment Fee",
-                "ledger_id": "A9",
-                "ledger_name": "OTC Fee",
                 "debit": float(fee),
                 "credit": 0
+                },
+                {
+                "narration": "Platform Fee",
+                "ledger_id": "A9",
+                "ledger_name": "OTC Fee",
+                "debit": 0,
+                "credit": float(fee)
                 }
                 
                 ],
