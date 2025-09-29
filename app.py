@@ -1536,6 +1536,34 @@ def update_patient_bill(patient_id):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@app.route("/patient_amount_update/<string:patient_id>", methods=["POST"])
+def update_patient_bill_amount(patient_id):
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "No update data provided"}), 400
+
+        # MongoDB ObjectId में convert
+        from bson import ObjectId
+        query = {"_id": ObjectId(patient_id)}
+
+        # Update patient details
+        result = patient.update_one(query, {"$set": {'amount':data.get("amount")}})
+
+        if result.matched_count == 0:
+            return jsonify({"status": "error", "message": "Patient not found"}), 404
+
+        return jsonify({
+            "status": "success",
+            "message": "Patient updated successfully",
+            "patient_id": patient_id
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+
 
 @app.route("/api/patients", methods=["GET"])
 def get_patients_search():
