@@ -2131,7 +2131,18 @@ def book_appointment_current_opd():
         return jsonify({"error": str(e)}), 500
 
 
-
+@app.route("/tv-webhook/<string:id>", methods=["GET"])
+def tvwebhook(id):
+    try:
+        documents = appointment.find_one(
+            {"_id": ObjectId(id),"statusC":"checked"},
+            {"patient_name": 1}
+        )
+        if not documents:
+            return jsonify({"id": id, "status":False}), 200
+        return jsonify({"id": id, "status":True}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
