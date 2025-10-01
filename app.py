@@ -1075,64 +1075,67 @@ def razorpay_webhookupdated():
 
             try:
 
+                duplicatepayment = vouchers.find_one({'Payment_id': payment_id})
+                if not duplicatepayment:
+
                 # Current time in UTC (GMT)
-                utc_now = datetime.now(ZoneInfo("UTC"))
-                ist_now = utc_now.astimezone(ZoneInfo("Asia/Kolkata"))
+                    utc_now = datetime.now(ZoneInfo("UTC"))
+                    ist_now = utc_now.astimezone(ZoneInfo("Asia/Kolkata"))
 
                 
-                voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
-                date_str = voucher_date.strftime("%Y-%m-%d")
-                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-                start = datetime(date_obj.year, date_obj.month, date_obj.day)
-                end = start + timedelta(days=1)
-
-                count_txn = vouchers.count_documents({})
-                count = vouchers.count_documents({
-                    "voucher_type": "Receipt",
-                    "voucher_mode": "Bank",
-                    "date": {"$gte": start, "$lt": end}   # between start and end of day
-                })
-
-                voucher_number = "BRV-"+ str(date_str) +'-'+ str(count + 1)
-                voucher = {
-                    "amount":float(fee),
-                    "voucher_number": voucher_number,
-                    "voucher_type": 'Receipt',
-                    "voucher_mode": "Bank",
-                    "txn": count_txn + 1,
-                    "doctor_id": retrieved_data['doctor_phone_id'],
-                    "from_id": phone,
-                    "to_id": payment_id,
-                    "date": datetime.now(ZoneInfo("Asia/Kolkata")),
-                    "Payment_id": payment_id,
-                    "narration": 'Appointment Fee',
-                    "entries": [
-                {
-                "narration": "Appointment Fee",
-                "ledger_id": "A1",
-                "ledger_name": "Razorpay",
-                "debit": float(fee),
-                "credit": 0
-                },
-                {
-                "narration": "Appointment Fee",
-                "ledger_id": "A2",
-                "ledger_name": "Doctor Fee Payble",
-                "debit": 0,
-                "credit": float(fee)-20
-                },
-                {
-                "narration": "Appointment Fee",
-                "ledger_id": "A3",
-                "ledger_name": "Platform Fee",
-                "debit": 0,
-                "credit": 20
-                }
-                ],
-                    "created_by": "system",
-                    "created_at": ist_now
-                }
-                vouchers.insert_one(voucher)
+                    voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
+                    date_str = voucher_date.strftime("%Y-%m-%d")
+                    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                    start = datetime(date_obj.year, date_obj.month, date_obj.day)
+                    end = start + timedelta(days=1)
+    
+                    count_txn = vouchers.count_documents({})
+                    count = vouchers.count_documents({
+                        "voucher_type": "Receipt",
+                        "voucher_mode": "Bank",
+                        "date": {"$gte": start, "$lt": end}   # between start and end of day
+                    })
+    
+                    voucher_number = "BRV-"+ str(date_str) +'-'+ str(count + 1)
+                    voucher = {
+                        "amount":float(fee),
+                        "voucher_number": voucher_number,
+                        "voucher_type": 'Receipt',
+                        "voucher_mode": "Bank",
+                        "txn": count_txn + 1,
+                        "doctor_id": retrieved_data['doctor_phone_id'],
+                        "from_id": phone,
+                        "to_id": payment_id,
+                        "date": datetime.now(ZoneInfo("Asia/Kolkata")),
+                        "Payment_id": payment_id,
+                        "narration": 'Appointment Fee',
+                        "entries": [
+                    {
+                    "narration": "Appointment Fee",
+                    "ledger_id": "A1",
+                    "ledger_name": "Razorpay",
+                    "debit": float(fee),
+                    "credit": 0
+                    },
+                    {
+                    "narration": "Appointment Fee",
+                    "ledger_id": "A2",
+                    "ledger_name": "Doctor Fee Payble",
+                    "debit": 0,
+                    "credit": float(fee)-20
+                    },
+                    {
+                    "narration": "Appointment Fee",
+                    "ledger_id": "A3",
+                    "ledger_name": "Platform Fee",
+                    "debit": 0,
+                    "credit": 20
+                    }
+                    ],
+                        "created_by": "system",
+                        "created_at": ist_now
+                    }
+                    vouchers.insert_one(voucher)
             except:
                 print(2)
 
