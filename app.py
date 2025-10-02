@@ -1770,7 +1770,7 @@ def v1_m_doctor_payment():
         return jsonify({"error": str(e)}), 500
 
 
-def paymentrequest_msg(from_number,MID,amount,name):
+def paymentrequest_msg(from_number,MID,amount,name,c):
     headers={'Authorization': 'Bearer EAAQNrOr6av0BPojE1zKKzKEDJWVmZBBvtBefl8aS24XBz4QcLzXPeF6wTlCBsIPFeOcwHi5AZBuXwkN6IfpI4uDjyLZAYRvMNF9jdVdeJ2WiNlnY1N1NpmFZBrJCSZAZCALx23ZArZA0jWnn0kEic6gY1Li4TFw8pZAnKZAmJtM0o6ZBfQZC8zi3v2EtcsoEnu9FutphkQZDZD','Content-Type': 'application/json'}
     external_url = "https://graph.facebook.com/v22.0/794530863749639/messages"  # Example API URL
     incoming_data = { 
@@ -1778,7 +1778,7 @@ def paymentrequest_msg(from_number,MID,amount,name):
   "to": from_number, 
   "type": "template", 
   "template": { 
-    "name": "payment_request_msg", 
+    "name": "payment_notification", 
     "language": { "code": "en" },
     "components": [
       {
@@ -1795,6 +1795,10 @@ def paymentrequest_msg(from_number,MID,amount,name):
           {
             "type": "text",
             "text": amount
+          },
+          {
+            "type": "text",
+            "text": c
           }
         ]
       }
@@ -1836,8 +1840,9 @@ def multiple_doctor_payment_request():
                 MID = data.get("id")
                 name = data.get("name")
                 amount = data.get("amount")
+                currentbalance = data.get("currentbalance")
 
-                res = paymentrequest_msg(from_number, MID,amount,name)
+                res = paymentrequest_msg(from_number, MID,amount,name,currentbalance)
 
                 # Save with createdAt field
                 data["paymentId"] = generate_payment_id()
