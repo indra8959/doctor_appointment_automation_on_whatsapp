@@ -1706,6 +1706,8 @@ def v1_m_doctor_payment():
             phone = data.get("phone")
             _id = data.get("_id")
             status = data.get("status")
+            nareshan = data.get(nareshan)
+            
 
             if status=='approve':
 
@@ -1738,19 +1740,19 @@ def v1_m_doctor_payment():
                             "to_id": doctorId,
                             "date": datetime.now(ZoneInfo("Asia/Kolkata")),
                             "Payment_id": payment_id,
-                            "narration": 'Doctor Payment',
+                            "narration": nareshan,
                             "amount":float(fee),
                             "transaction_id":transactionId,
                             "entries": [
                         {
-                        "narration": "Doctor Payment",
+                        "narration": nareshan,
                         "ledger_id": "A2",
                         "ledger_name": "Doctor Fee Payble",
                         "debit": float(fee),
                         "credit": 0
                         },
                         {
-                        "narration": "Doctor Payment",
+                        "narration": nareshan,
                         "ledger_id": ledgerCode,
                         "ledger_name": ledgerName,
                         "debit": 0,
@@ -1768,15 +1770,15 @@ def v1_m_doctor_payment():
         return jsonify({"error": str(e)}), 500
 
 
-def paymentrequest_msg(from_number,MID,amount):
-    headers={'Authorization': 'Bearer EACHqNPEWKbkBO33utbtE1EMW5T1B8KlYqSpLDepuZCdrEY9unIfGmwnlZB4XgfEFQw2ohjGAAoBL1OHY08kftSW0ZBEvX5eXIodrY2gghys3IEoyoKwZCvHh0ZBd7I6eB9ttTEV1fsghWvpzycfIr5pIVIeftLpO0jlFLp9FZB31dd48QZCzmYSxSvKuIFkZAOlchwZDZD','Content-Type': 'application/json'}
-    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+def paymentrequest_msg(from_number,MID,amount,name):
+    headers={'Authorization': 'Bearer EAAQNrOr6av0BPojE1zKKzKEDJWVmZBBvtBefl8aS24XBz4QcLzXPeF6wTlCBsIPFeOcwHi5AZBuXwkN6IfpI4uDjyLZAYRvMNF9jdVdeJ2WiNlnY1N1NpmFZBrJCSZAZCALx23ZArZA0jWnn0kEic6gY1Li4TFw8pZAnKZAmJtM0o6ZBfQZC8zi3v2EtcsoEnu9FutphkQZDZD','Content-Type': 'application/json'}
+    external_url = "https://graph.facebook.com/v22.0/794530863749639/messages"  # Example API URL
     incoming_data = { 
   "messaging_product": "whatsapp", 
   "to": from_number, 
   "type": "template", 
   "template": { 
-    "name": "payment_request", 
+    "name": "payment_request_msg", 
     "language": { "code": "en" },
     "components": [
       {
@@ -1784,11 +1786,15 @@ def paymentrequest_msg(from_number,MID,amount):
         "parameters": [
           {
             "type": "text",
-            "text": amount 
+            "text": name 
           },
           {
             "type": "text",
             "text": MID
+          },
+          {
+            "type": "text",
+            "text": amount
           }
         ]
       }
@@ -1828,8 +1834,10 @@ def multiple_doctor_payment_request():
 
                 from_number = data.get("phone")
                 MID = data.get("id")
+                name = data.get("name")
+                amount = data.get("amount")
 
-                # res = paymentrequest_msg(from_number, MID)
+                res = paymentrequest_msg(from_number, MID,amount,name)
 
                 # Save with createdAt field
                 data["paymentId"] = generate_payment_id()
@@ -1876,7 +1884,6 @@ def multiple_doctor_payment_request():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 @app.route("/get_appointments", methods=["GET"])
