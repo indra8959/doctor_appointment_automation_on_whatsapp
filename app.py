@@ -44,6 +44,7 @@ templog = db["logs"]
 disableslot = db["disableslot"] 
 vouchers = db["vouchers"] 
 patient = db["patient"] 
+requestdb = db["requests"]
 API_KEY = "1234"
 
 
@@ -1670,6 +1671,7 @@ def get_multiple_doctor():
         closing_balance = opening_balance + (total_debit - total_credit)
 
         doctorpaymentlist.append({
+            "id":doctor['secondaryId'],
             "doctor_id": doctor_id,
             "doctor_name": doctor['name'],
             "phone_number": doctor['phone'],
@@ -1698,54 +1700,180 @@ def v1_m_doctor_payment():
             payment_id = data.get("paymentId")
             ledgerCode = data.get("ledgerCode")
             ledgerName = data.get("ledgerName")
+            
 
-            voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
-            date_str = voucher_date.strftime("%Y-%m-%d")
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-            start = datetime(date_obj.year, date_obj.month, date_obj.day)
-            end = start + timedelta(days=1)
+            id = data.get("id")
+            phone = data.get("phone")
+            _id = data.get("_id")
+            status = data.get("status")
 
-            count_txn = vouchers.count_documents({})
-            count = vouchers.count_documents({
-                        "voucher_type": "Payment",
-                        "voucher_mode": "Bank",
-                        "date": {"$gte": start, "$lt": end}   # between start and end of day
-            })
+            if status=='approve':
 
-            voucher_number = "BPV-"+ str(date_str) +'-'+ str(count + 1)
-            voucher = {
-                        "voucher_number": voucher_number,
-                        "voucher_type": 'Payment',
-                        "voucher_mode": "Bank",
-                        "txn": count_txn + 1,
-                        "doctor_id": doctorId,
-                        "from_id": "admin",
-                        "to_id": doctorId,
-                        "date": datetime.now(ZoneInfo("Asia/Kolkata")),
-                        "Payment_id": payment_id,
-                        "narration": 'Doctor Payment',
-                        "amount":float(fee),
-                        "entries": [
-                    {
-                    "narration": "Doctor Payment",
-                    "ledger_id": "A2",
-                    "ledger_name": "Doctor Fee Payble",
-                    "debit": float(fee),
-                    "credit": 0
-                    },
-                    {
-                    "narration": "Doctor Payment",
-                    "ledger_id": ledgerCode,
-                    "ledger_name": ledgerName,
-                    "debit": 0,
-                    "credit": float(fee)
-                    }
-                    ],
-                        "created_by": "system",
-                        "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
-                    }
-            vouchers.insert_one(voucher)
+                transactionId = data.get("transactionId")
+
+                requestdb.update_one({'_id':ObjectId(_id)},{"$set": {'status':'approve'}})
+
+
+                voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
+                date_str = voucher_date.strftime("%Y-%m-%d")
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                start = datetime(date_obj.year, date_obj.month, date_obj.day)
+                end = start + timedelta(days=1)
+
+                count_txn = vouchers.count_documents({})
+                count = vouchers.count_documents({
+                            "voucher_type": "Payment",
+                            "voucher_mode": "Bank",
+                            "date": {"$gte": start, "$lt": end}   # between start and end of day
+                })
+
+                voucher_number = "BPV-"+ str(date_str) +'-'+ str(count + 1)
+                voucher = {
+                            "voucher_number": voucher_number,
+                            "voucher_type": 'Payment',
+                            "voucher_mode": "Bank",
+                            "txn": count_txn + 1,
+                            "doctor_id": doctorId,
+                            "from_id": "admin",
+                            "to_id": doctorId,
+                            "date": datetime.now(ZoneInfo("Asia/Kolkata")),
+                            "Payment_id": payment_id,
+                            "narration": 'Doctor Payment',
+                            "amount":float(fee),
+                            "transaction_id":transactionId,
+                            "entries": [
+                        {
+                        "narration": "Doctor Payment",
+                        "ledger_id": "A2",
+                        "ledger_name": "Doctor Fee Payble",
+                        "debit": float(fee),
+                        "credit": 0
+                        },
+                        {
+                        "narration": "Doctor Payment",
+                        "ledger_id": ledgerCode,
+                        "ledger_name": ledgerName,
+                        "debit": 0,
+                        "credit": float(fee)
+                        }
+                        ],
+                            "created_by": "system",
+                            "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
+                        }
+                vouchers.insert_one(voucher)
+            else:
+                requestdb.update_one({'_id':ObjectId(_id)},{"$set": {'status':status}})
         return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def paymentrequest_msg(from_number,MID,amount):
+    headers={'Authorization': 'Bearer EACHqNPEWKbkBO33utbtE1EMW5T1B8KlYqSpLDepuZCdrEY9unIfGmwnlZB4XgfEFQw2ohjGAAoBL1OHY08kftSW0ZBEvX5eXIodrY2gghys3IEoyoKwZCvHh0ZBd7I6eB9ttTEV1fsghWvpzycfIr5pIVIeftLpO0jlFLp9FZB31dd48QZCzmYSxSvKuIFkZAOlchwZDZD','Content-Type': 'application/json'}
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+    incoming_data = { 
+  "messaging_product": "whatsapp", 
+  "to": from_number, 
+  "type": "template", 
+  "template": { 
+    "name": "payment_request", 
+    "language": { "code": "en" },
+    "components": [
+      {
+        "type": "body",
+        "parameters": [
+          {
+            "type": "text",
+            "text": amount 
+          },
+          {
+            "type": "text",
+            "text": MID
+          }
+        ]
+      }
+    ]
+  } 
+}
+    response = requests.post(external_url, json=incoming_data, headers=headers)
+    print(jsonify(response.json()))
+    return "OK", 200
+
+
+import secrets
+import string
+def generate_payment_id():
+    today_str = datetime.now().strftime("%Y%m%d")  # YYYYMMDD
+    prefix = "PAY"
+
+    # Random 6 character string (letters+digits)
+    random_str = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(6))
+
+    return f"{prefix}-{today_str}-{random_str}"
+
+@app.route("/multiple_doctor-payment-request", methods=["GET", "POST"])
+def multiple_doctor_payment_request():
+    try:
+        # ✅ POST Request (insert data)
+        if request.method == "POST":
+            datas = request.json
+
+            if not datas or not isinstance(datas, list):
+                return jsonify({"error": "Invalid data format, expected list"}), 400
+
+            for data in datas:
+                doctorId = data.get("doctorId")
+                if not doctorId:
+                    continue  
+
+                from_number = data.get("phone")
+                MID = data.get("id")
+
+                # res = paymentrequest_msg(from_number, MID)
+
+                # Save with createdAt field
+                data["paymentId"] = generate_payment_id()
+                data["role"] = 'payment_req'
+                data["createdAt"] = datetime.now(ZoneInfo("Asia/Kolkata"))
+                requestdb.insert_one(data)
+
+            return jsonify({"status": "ok"}), 200
+
+        elif request.method == "GET":
+            from_date_str = request.args.get("from")
+            to_date_str = request.args.get("to")
+            status = request.args.get("status")  # query param: ?status=pending
+
+            query = {}
+
+            # Date range filter
+            if from_date_str and to_date_str:
+                try:
+                    from_date = datetime.strptime(from_date_str, "%Y-%m-%d")
+                    to_date = datetime.strptime(to_date_str, "%Y-%m-%d")
+                    to_date = to_date.replace(hour=23, minute=59, second=59)
+                    query["createdAt"] = {"$gte": from_date, "$lte": to_date}
+                except ValueError:
+                    return jsonify({"error": "Invalid date format, use YYYY-MM-DD"}), 400
+
+            # Status filter
+            if status:
+                query["status"] = status
+
+            documents = list(requestdb.find(query))
+
+            if not documents:
+                return jsonify({"error": "No records found"}), 404
+
+            records = []
+            for doc in documents:
+                doc["_id"] = str(doc["_id"])
+                if "createdAt" in doc:
+                    doc["createdAt"] = doc["createdAt"].strftime("%Y-%m-%d %H:%M:%S")
+                records.append(doc)
+
+            return jsonify(records), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
