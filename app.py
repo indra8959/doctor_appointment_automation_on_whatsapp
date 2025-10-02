@@ -1706,7 +1706,7 @@ def v1_m_doctor_payment():
             phone = data.get("phone")
             _id = data.get("_id")
             status = data.get("status")
-            nareshan = data.get(nareshan)
+            nareshan = data.get("nareshan")
             
 
             if status=='approve':
@@ -1769,7 +1769,7 @@ def v1_m_doctor_payment():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
+import requests
 def paymentrequest_msg(from_number,MID,amount,name,c):
     headers={'Authorization': 'Bearer EAAQNrOr6av0BPojE1zKKzKEDJWVmZBBvtBefl8aS24XBz4QcLzXPeF6wTlCBsIPFeOcwHi5AZBuXwkN6IfpI4uDjyLZAYRvMNF9jdVdeJ2WiNlnY1N1NpmFZBrJCSZAZCALx23ZArZA0jWnn0kEic6gY1Li4TFw8pZAnKZAmJtM0o6ZBfQZC8zi3v2EtcsoEnu9FutphkQZDZD','Content-Type': 'application/json'}
     external_url = "https://graph.facebook.com/v22.0/794530863749639/messages"  # Example API URL
