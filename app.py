@@ -1778,7 +1778,7 @@ def paymentrequest_msg(from_number,MID,amount,name,c):
   "to": from_number, 
   "type": "template", 
   "template": { 
-    "name": "payment_notification", 
+    "name": "payment_request_msg", 
     "language": { "code": "en" },
     "components": [
       {
@@ -1795,10 +1795,6 @@ def paymentrequest_msg(from_number,MID,amount,name,c):
           {
             "type": "text",
             "text": amount
-          },
-          {
-            "type": "text",
-            "text": c
           }
         ]
       }
