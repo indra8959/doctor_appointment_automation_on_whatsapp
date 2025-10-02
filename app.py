@@ -1891,6 +1891,7 @@ def multiple_doctor_payment_request():
         return jsonify({"error": str(e)}), 500
 
 
+
 @app.route("/get_appointments", methods=["GET"])
 def get_appointments_by_range():
     try:
