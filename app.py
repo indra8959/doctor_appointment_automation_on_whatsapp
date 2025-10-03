@@ -2030,6 +2030,36 @@ def transform_entry(entry):
                     # }
                 ]
 
+
+def grouping_entry(entry):
+                if not entry.get("settlemant") or entry["settlemant"] == 0:
+                    return []
+                pid = entry["Payment_id"]
+                return [
+                    {
+                        "Payment_id": pid,
+                        "narration": "Payment ID - "+pid,
+                        "ledger_id": "A4",
+                        "ledger_name": "IDFC bank",
+                        "debit": entry["settlemant"],
+                        "credit": 0
+                    }
+                ]
+def grouping_entry2(entry):
+                if not entry.get("razorpay") or entry["razorpay"] == 0:
+                    return []
+                pid = entry["Payment_id"]
+                return [
+                    {
+                        "Payment_id": pid,
+                        "narration": "Payment ID - "+pid,
+                        "ledger_id": "A4",
+                        "ledger_name": "IDFC bank",
+                        "debit": entry["razorpay"],
+                        "credit": 0
+                    }
+                ]
+
 @app.route("/excel_razorpay_tax", methods=["POST"])
 def v1_excel_razorpay_tax():
     try:
@@ -2068,13 +2098,15 @@ def v1_excel_razorpay_tax():
             data["date"] = dt
 
             entries = [e for entry in data["entries"] for e in transform_entry(entry)]
+
             entries.append({
                         "Payment_id": 'system',
                         "narration": "Bank Settlement",
                         "ledger_id": "A4",
                         "ledger_name": "IDFC bank",
                         "debit": float(data["bankamount"]),
-                        "credit": 0
+                        "credit": 0,
+                        "grouping": [e for entry in data["entries"] for e in grouping_entry(entry)]
                     })
             
             entries.append({
@@ -2083,7 +2115,8 @@ def v1_excel_razorpay_tax():
                         "ledger_id": "A1",
                         "ledger_name": "Razorpay",
                         "debit": 0,
-                        "credit": float(data["amount"])
+                        "credit": float(data["amount"]),
+                        "grouping": [e for entry in data["entries"] for e in grouping_entry2(entry)]
                     })
 
 
@@ -2111,6 +2144,7 @@ def v1_excel_razorpay_tax():
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 from razorpay import pay_link
