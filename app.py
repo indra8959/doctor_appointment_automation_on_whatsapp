@@ -2042,8 +2042,9 @@ def v1_excel_razorpay_tax():
             # date_str = voucher_date.strftime("%Y-%m-%d")
 
             date_str = datetime.strptime(data["date"], "%Y-%m-%d")
+            date_str = date_str.strftime("%Y-%m-%d")
 
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            date_obj = datetime.strptime(data["date"], "%Y-%m-%d")
             start = datetime(date_obj.year, date_obj.month, date_obj.day)
             end = start + timedelta(days=1)
 
@@ -2055,6 +2056,8 @@ def v1_excel_razorpay_tax():
             })
 
             voucher_number = "JRV-"+ str(date_str) +'-'+ str(count + 1)
+
+            # print(voucher_number)
 
             dt = datetime.strptime(data["date"], "%Y-%m-%d")
             dt = dt.replace(hour=2, minute=0, second=13, microsecond=645000, tzinfo=ZoneInfo("Asia/Kolkata"))
