@@ -1988,7 +1988,7 @@ def transform_entry(entry):
                     return [
                         {
                         "Payment_id": pid,
-                        "narration": "Settlement for "+pid,
+                        "narration": "Payment ID - "+pid,
                         "ledger_id": "A7",
                         "ledger_name": "Gateway Expenses",
                         "debit": entry["gataway_charges"],
@@ -2006,7 +2006,7 @@ def transform_entry(entry):
                     # },
                     {
                         "Payment_id": pid,
-                        "narration": "Settlement for "+pid,
+                        "narration": "Payment ID - "+pid,
                         "ledger_id": "A8",
                         "ledger_name": "Input Tax Credit",
                         "debit": entry["tax"],
@@ -2014,7 +2014,7 @@ def transform_entry(entry):
                     },
                     {
                         "Payment_id": pid,
-                        "narration": "Settlement for "+pid,
+                        "narration": "Payment ID - "+pid,
                         "ledger_id": "A7",
                         "ledger_name": "Gateway Expenses",
                         "debit": entry["gataway_charges"],
