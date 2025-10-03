@@ -2071,7 +2071,7 @@ def v1_excel_razorpay_tax():
                         "narration": "Bank Settlement",
                         "ledger_id": "A4",
                         "ledger_name": "IDFC bank",
-                        "debit": data["bankamount"],
+                        "debit": float(data["bankamount"]),
                         "credit": 0
                     })
             
@@ -2081,7 +2081,7 @@ def v1_excel_razorpay_tax():
                         "ledger_id": "A1",
                         "ledger_name": "Razorpay",
                         "debit": 0,
-                        "credit": data["amount"]
+                        "credit": float(data["amount"])
                     })
 
 
