@@ -1979,21 +1979,21 @@ def get_doctor(id):
 
 
 def transform_entry(entry):
-                if not entry.get("fee") or entry["fee"] == 0:
+                if not entry.get("razorpay") or entry["razorpay"] == 0:
                     return []
                 pid = entry["Payment_id"]
                 return [
                     {
                         "Payment_id": pid,
-                        "narration": pid,
+                        "narration": "Settlement for "+pid,
                         "ledger_id": "A1",
                         "ledger_name": "Razorpay",
                         "debit": 0,
-                        "credit": entry["fee"]
+                        "credit": entry["razorpay"]
                     },
                     {
                         "Payment_id": pid,
-                        "narration": pid,
+                        "narration": "Settlement for "+pid,
                         "ledger_id": "A8",
                         "ledger_name": "Input Tax Credit",
                         "debit": entry["tax"],
@@ -2001,10 +2001,17 @@ def transform_entry(entry):
                     },
                     {
                         "Payment_id": pid,
-                        "narration": pid,
+                        "narration": "Settlement for "+pid,
                         "ledger_id": "A7",
                         "ledger_name": "Gateway Expenses",
                         "debit": entry["gataway_charges"],
+                        "credit": 0
+                    },{
+                        "Payment_id": pid,
+                        "narration": "Settlement for "+pid,
+                        "ledger_id": "A4",
+                        "ledger_name": "IDFC bank",
+                        "debit": entry["settlemant"],
                         "credit": 0
                     }
                 ]
@@ -2051,7 +2058,7 @@ def v1_excel_razorpay_tax():
                 "from_id": "admin",
                 "to_id": doctorId,
                 "Payment_id": payment_id,
-                "narration": 'Razorpay Tax',
+                "narration": 'Bank Settlement',
                 "created_by": "system",
                 "created_at": datetime.now(ZoneInfo("Asia/Kolkata")),
                 "entries": [e for entry in data["entries"] for e in transform_entry(entry)]
@@ -2062,6 +2069,7 @@ def v1_excel_razorpay_tax():
         return jsonify({"status": "ok"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 from razorpay import pay_link
 
