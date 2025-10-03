@@ -1297,6 +1297,8 @@ def get_ledger_entries(ledger_id):
                     "date": doc.get("date"),
                 })
 
+    ledger_entries.sort(key=lambda x: x["date"])
+
     return jsonify({
         "ledger_id": ledger_id,
         "opening_balance": opening_balance,
