@@ -1982,15 +1982,26 @@ def transform_entry(entry):
                 if not entry.get("razorpay") or entry["razorpay"] == 0:
                     return []
                 pid = entry["Payment_id"]
-                return [
-                    {
+                if not entry.get("tax") or entry["tax"] == 0:
+                    return [
+                        {
                         "Payment_id": pid,
                         "narration": "Settlement for "+pid,
-                        "ledger_id": "A1",
-                        "ledger_name": "Razorpay",
-                        "debit": 0,
-                        "credit": entry["razorpay"]
-                    },
+                        "ledger_id": "A7",
+                        "ledger_name": "Gateway Expenses",
+                        "debit": entry["gataway_charges"],
+                        "credit": 0
+                    }
+                    ]
+                return [
+                    # {
+                    #     "Payment_id": pid,
+                    #     "narration": "Settlement for "+pid,
+                    #     "ledger_id": "A1",
+                    #     "ledger_name": "Razorpay",
+                    #     "debit": 0,
+                    #     "credit": entry["razorpay"]
+                    # },
                     {
                         "Payment_id": pid,
                         "narration": "Settlement for "+pid,
@@ -2006,14 +2017,15 @@ def transform_entry(entry):
                         "ledger_name": "Gateway Expenses",
                         "debit": entry["gataway_charges"],
                         "credit": 0
-                    },{
-                        "Payment_id": pid,
-                        "narration": "Settlement for "+pid,
-                        "ledger_id": "A4",
-                        "ledger_name": "IDFC bank",
-                        "debit": entry["settlemant"],
-                        "credit": 0
                     }
+                    # ,{
+                    #     "Payment_id": pid,
+                    #     "narration": "Settlement for "+pid,
+                    #     "ledger_id": "A4",
+                    #     "ledger_name": "IDFC bank",
+                    #     "debit": entry["settlemant"],
+                    #     "credit": 0
+                    # }
                 ]
 
 @app.route("/excel_razorpay_tax", methods=["POST"])
@@ -2026,8 +2038,11 @@ def v1_excel_razorpay_tax():
             doctorId = 'system'
             payment_id = 'system'
 
-            voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
-            date_str = voucher_date.strftime("%Y-%m-%d")
+            # voucher_date = datetime.now(ZoneInfo("Asia/Kolkata"))
+            # date_str = voucher_date.strftime("%Y-%m-%d")
+
+            date_str = datetime.strptime(data["date"], "%Y-%m-%d")
+
             date_obj = datetime.strptime(date_str, "%Y-%m-%d")
             start = datetime(date_obj.year, date_obj.month, date_obj.day)
             end = start + timedelta(days=1)
@@ -2047,6 +2062,26 @@ def v1_excel_razorpay_tax():
 # ✅ keep as datetime object
             data["date"] = dt
 
+            entries = [e for entry in data["entries"] for e in transform_entry(entry)]
+            entries.append({
+                        "Payment_id": 'system',
+                        "narration": "Bank Settlement",
+                        "ledger_id": "A4",
+                        "ledger_name": "IDFC bank",
+                        "debit": data["bankamount"],
+                        "credit": 0
+                    })
+            
+            entries.append({
+                        "Payment_id": 'system',
+                        "narration": "Bank Settlement",
+                        "ledger_id": "A1",
+                        "ledger_name": "Razorpay",
+                        "debit": 0,
+                        "credit": data["amount"]
+                    })
+
+
             voucher = {
                 "date": data["date"],
                 "amount": data["amount"],
@@ -2061,8 +2096,10 @@ def v1_excel_razorpay_tax():
                 "narration": 'Bank Settlement',
                 "created_by": "system",
                 "created_at": datetime.now(ZoneInfo("Asia/Kolkata")),
-                "entries": [e for entry in data["entries"] for e in transform_entry(entry)]
+                "entries": entries
             }
+
+            # print(voucher['entries'])
 
             # print(voucher)
             vouchers.insert_one(voucher)
