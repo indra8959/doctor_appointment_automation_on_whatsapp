@@ -2148,6 +2148,46 @@ def v1_excel_razorpay_tax():
 
 
 from razorpay import pay_link
+def opd_msg(from_number,name,no,date,time):
+    headers={'Authorization': 'Bearer EACHqNPEWKbkBO33utbtE1EMW5T1B8KlYqSpLDepuZCdrEY9unIfGmwnlZB4XgfEFQw2ohjGAAoBL1OHY08kftSW0ZBEvX5eXIodrY2gghys3IEoyoKwZCvHh0ZBd7I6eB9ttTEV1fsghWvpzycfIr5pIVIeftLpO0jlFLp9FZB31dd48QZCzmYSxSvKuIFkZAOlchwZDZD','Content-Type': 'application/json'}
+    external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
+    incoming_data = { 
+  "messaging_product": "whatsapp", 
+  "to": from_number, 
+  "type": "template", 
+  "template": { 
+    "name": "opd_booking", 
+    "language": { "code": "en" },
+    "components": [
+      {
+        "type": "body",
+        "parameters": [
+          {
+            "type": "text",
+            "text": name 
+          },
+          {
+            "type": "text",
+            "text": no
+          },
+          {
+            "type": "text",
+            "text": date
+          },
+          {
+            "type": "text",
+            "text": time
+          }
+        ]
+      }
+    ]
+  } 
+}
+    response = requests.post(external_url, json=incoming_data, headers=headers)
+    print(jsonify(response.json()))
+    return "OK", 200
+
+
 @app.route("/book_appointment_current_opd", methods=["POST"])
 def book_appointment_current_opd():
     try:
@@ -2338,20 +2378,15 @@ def book_appointment_current_opd():
                     "created_at": datetime.now(ZoneInfo("Asia/Kolkata"))
                 }
                 vouchers.insert_one(voucher)
+                
             except:
                 print(2)
 
+            whatsapp_url = opd_msg(phone,name,index_number,date,slot)
             # whatsapp_url = success_appointment(doa,index_number,name,doa,tm,phone)
 
             return jsonify({'appoint_number':appoint_number,'appointment_index':index_number,'date_of_appointment': date,
             'time_slot': slot}), 201
-
-
-            
-
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/tv-webhook/<string:id>", methods=["GET"])
