@@ -2148,7 +2148,6 @@ def v1_excel_razorpay_tax():
 
 
 from razorpay import pay_link
-
 @app.route("/book_appointment_current_opd", methods=["POST"])
 def book_appointment_current_opd():
     try:
@@ -2268,7 +2267,7 @@ def book_appointment_current_opd():
 
             dxxocument = doctors.find_one({'_id':ObjectId('67ee5e1bde4cb48c515073ee')})
             fee = float(dxxocument.get('otcfee'))
-            xfee = float(dxxocument.get('appointmentfee'))
+            xfee = float(dxxocument.get('doctorfee'))
 
             print('1')
 
@@ -2277,7 +2276,7 @@ def book_appointment_current_opd():
 
             print('1')
 
-            dataset.update({'payment_status':'paid','status':'success','pay_id':'offline','appoint_number':appoint_number,'amount':xfee,'appointment_index':index_number})
+            dataset.update({'payment_status':'paid','status':'success','pay_id':'offline','appoint_number':appoint_number,'amount':xfee+fee,'appointment_index':index_number})
 
             id = str(appointment.insert_one(dataset).inserted_id)
             print(id)
@@ -2321,8 +2320,8 @@ def book_appointment_current_opd():
                     "entries": [
                 {
                 "narration": "Platform Fee",
-                "ledger_id": "A11",
-                "ledger_name": "OTC Fee Receivable",
+                "ledger_id": "A2",
+                "ledger_name": "Doctor Fee Payble",
                 "debit": float(fee),
                 "credit": 0
                 },
