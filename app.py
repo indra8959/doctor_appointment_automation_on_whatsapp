@@ -21,11 +21,16 @@ from apscheduler.triggers.cron import CronTrigger
 # import requests
 # from requests.auth import HTTPBasicAuth
 from api_files.create_ledger import accounting_bp
+from api_files.doctors import doctor_bp
+from api_files.auth import auth_bp
 
 app = Flask(__name__)
 CORS(app)
 
 app.register_blueprint(accounting_bp, url_prefix="/accounting")
+app.register_blueprint(doctor_bp)
+app.register_blueprint(auth_bp)
+
 # razorpay
 
 

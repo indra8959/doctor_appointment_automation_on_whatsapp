@@ -9,4 +9,8 @@ fpdf
 apscheduler
 cryptography
 pillow
+PyJWT
+razorpay
+setuptools
+bs4
 
