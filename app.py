@@ -1559,7 +1559,7 @@ def update_patient_bill_amount(patient_id):
         query = {"_id": ObjectId(patient_id)}
 
         # Update patient details
-        result = patient.update_one(query, {"$set": {'amount':data.get("amount")}})
+        result = patient.update_one(query, {"$set": {'amount':data.get("amount"),'name':data.get("name")}})
 
         if result.matched_count == 0:
             return jsonify({"status": "error", "message": "Patient not found"}), 404
@@ -2418,4 +2418,5 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(port=5001,debug=True)
+
 
