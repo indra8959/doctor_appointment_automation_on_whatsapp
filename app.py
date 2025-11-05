@@ -2411,6 +2411,15 @@ def tvwebhook(id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/redirect_razorpay_payment/<string:id>", methods=["GET"])
+def redirect_razorpay_payment(id):
+    try:
+        return redirect('https://rzp.io/rzp/'+id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 if __name__ == "__main__":
     app.run(port=5000,host="0.0.0.0")
 
@@ -2418,5 +2427,6 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(port=5001,debug=True)
+
 
 
