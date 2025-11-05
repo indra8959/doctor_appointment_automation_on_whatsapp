@@ -235,27 +235,29 @@
        <button 
   type="button" 
   class="pay-button"
-  onclick="tryOpenChrome('{{ pay_url }}')"
+  onclick="openInRealBrowser('{{ pay_url }}')"
 >
   <i class="fas fa-lock"></i> Pay Now ₹220.00
 </button>
 
 <script>
-function tryOpenChrome(url) {
+function openInRealBrowser(url) {
   const ua = navigator.userAgent.toLowerCase();
 
-  // Detect WhatsApp in-app browser
-  if (ua.includes("whatsapp")) {
-    // Try Chrome intent (Android only)
-    const intentUrl = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
-    window.location.href = intentUrl;
-    
-    // Fallback: show alert if intent fails
+  // Detect WhatsApp or Facebook in-app browsers
+  if (ua.includes("whatsapp") || ua.includes("fb") || ua.includes("instagram")) {
+    // This will trigger Chrome to open on Android
+    const finalUrl = 'intent://' + url.replace(/^https?:\/\//, '') + 
+      '#Intent;scheme=https;package=com.android.chrome;end';
+
+    window.location.href = finalUrl;
+
+    // Fallback message if intent fails
     setTimeout(() => {
-      alert("Please open this link in Chrome for secure payment.");
+    //   alert("Please tap the three dots (⋮) in the top-right corner and choose 'Open in Chrome' for secure payment.");
     }, 1500);
   } else {
-    // Normal browsers
+    // Normal browser - just open new tab
     window.open(url, '_blank');
   }
 }
