@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify,redirect,Response
+from flask import Flask, request, jsonify,redirect,Response,render_template
 from pymongo import MongoClient
 import re
 from datetime import datetime, timedelta
@@ -2414,7 +2414,7 @@ def tvwebhook(id):
 @app.route("/redirect_razorpay_payment/<string:id>", methods=["GET"])
 def redirect_razorpay_payment(id):
     try:
-        return redirect('https://rzp.io/rzp/'+id)
+        return render_template('payment.html', pay_url='https://rzp.io/rzp/'+id)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -2427,6 +2427,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(port=5001,debug=True)
+
 
 
 
