@@ -232,9 +232,34 @@
         </div>
 
         <!-- Pay Button - Stylish Cyan Gradient, Pill Shape -->
-       <button type="button" class="pay-button" onclick="window.location.href='{{ pay_url }}'">
-    <i class="fas fa-lock"></i> Pay Now ₹220.00
+       <button 
+  type="button" 
+  class="pay-button"
+  onclick="tryOpenChrome('{{ pay_url }}')"
+>
+  <i class="fas fa-lock"></i> Pay Now ₹220.00
 </button>
+
+<script>
+function tryOpenChrome(url) {
+  const ua = navigator.userAgent.toLowerCase();
+
+  // Detect WhatsApp in-app browser
+  if (ua.includes("whatsapp")) {
+    // Try Chrome intent (Android only)
+    const intentUrl = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+    window.location.href = intentUrl;
+    
+    // Fallback: show alert if intent fails
+    setTimeout(() => {
+      alert("Please open this link in Chrome for secure payment.");
+    }, 1500);
+  } else {
+    // Normal browsers
+    window.open(url, '_blank');
+  }
+}
+</script>
 
         <!-- Footer / Trust Badges -->
         <footer class="payment-footer">
