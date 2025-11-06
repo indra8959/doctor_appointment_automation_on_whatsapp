@@ -6,7 +6,6 @@
     <title>Secure Appointment Payment</title>
     <!-- Using a popular icon library for payment icons and the doctor logo --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Load Inter font for modern typography --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
     <style>
         /* Basic Reset and Setup */
         * {
@@ -17,7 +16,8 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f9fafb; /* Very light background for contrast */
+            background: linear-gradient(135deg, #06B6D4, #38BDF8);
+            /* background-color: #f9fafb;  */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -65,12 +65,13 @@
             margin-right: 12px;
         }
 
-        .amount {
-            color: #059669; 
+        .logo {
+            width: 200px;
+            /* color: #059669; 
             font-size: 1.9em;
             font-weight: 900; 
             letter-spacing: 0.8px;
-            margin-top: 10px;
+            margin-top: 10px; */
         }
 
         /* Appointment Details Section - Clean, minimal look */
@@ -188,6 +189,24 @@
             color: #6b7280;
         }
 
+        .branding-footer {
+            text-align: center;
+            margin-top: 10px;
+            padding-top: 20px;
+            border-top: 1px dashed #e5e7eb; /* Dashed line for a softer separation */
+            font-size: 0.85em;
+            color: #9ca3af; /* Light gray for subtle branding */
+            font-weight: 500;
+        }
+
+        .branding-footer img {
+            width: 200px;
+            margin-top: -20px;
+            /* height: 24px; */
+            vertical-align: middle; /* Aligns the image with the text baseline */
+            margin-right: 8px;
+        }
+
         /* Responsive adjustments for mobile screens */
         @media (max-width: 480px) {
             .payment-container {
@@ -213,24 +232,24 @@
         <header class="payment-header">
            
             <!-- Price in Rupee format (Rich Green) -->
-            <p class="amount">Consultation Fee: *₹220.00*</p>
+             <img class="logo" src="https://care2connect.in/assets/pp-BXFzvpwK.png" alt="img"/>
+            <!-- <p class="amount">Consultation Fee: *₹220.00*</p> -->
         </header>
 
         <!-- Appointment Details - Clean, Minimal Structure -->
         <div class="appointment-details">
-            <div class="detail-item"><span>Doctor:</span> <strong>Dr. Priya Sharma</strong></div>
-            <div class="detail-item"><span>Speciality:</span> <strong>Pediatrics</strong></div>
-            <div class="detail-item"><span>Date & Time:</span> <strong>Thu, 7 Nov | 10:30 AM IST</strong></div>
-            <div class="detail-item"><span>Type:</span> <strong>Online Video Consultation</strong></div>
+            <div class="detail-item"><span>Doctor:</span> <strong>Dr. Neeraj Bansal</strong></div>
+            <div class="detail-item"><span>Date:</span> <strong>{{ date }}</strong></div>
+            <div class="detail-item"><span>Time:</span> <strong>{{ time }}</strong></div>
+            <div class="detail-item"><span>Type:</span> <strong>OPD Booking Fee</strong></div>
         </div>
 
         <!-- Confirmation Message - Soft Yellow Info Box -->
         <div class="simplified-content">
             <p class="confirmation-message">
-                Proceeding confirms the booking. Your saved payment method will be used for the secure transaction.
+                Confirming this action will complete your transaction securely through encrypted payment gateway.
             </p>
         </div>
-
         <!-- Pay Button - Stylish Cyan Gradient, Pill Shape -->
        <button 
   type="button" 
@@ -275,6 +294,11 @@ function openInRealBrowser(url) {
                 <i class="fab fa-cc-discover" title="Discover"></i>
             </div>
         </footer>
+
+        <div class="branding-footer">
+            <p>Powered by</p>
+            <img src='https://firebasestorage.googleapis.com/v0/b/duniyamart-e69a1.appspot.com/o/images%2FiPhone%2016%20-%201.png?alt=media&token=da6ce006-0961-4922-8144-b37cb4031f26' alt='img'>
+        </div>
     </div>
 </body>
 </html>
