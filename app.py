@@ -2414,7 +2414,11 @@ def tvwebhook(id):
 @app.route("/redirect_razorpay_payment/<string:id>", methods=["GET"])
 def redirect_razorpay_payment(id):
     try:
-        return render_template('payment.html', pay_url='https://rzp.io/rzp/'+id)
+        retrieved_data = appointment.find_one({"razorpay_url": 'https://rzp.io/rzp/'+id})
+        date = retrieved_data['date_of_appointment']
+        name = retrieved_data['patient_name']
+        time = retrieved_data['time_slot']
+        return render_template('payment.html', pay_url='https://rzp.io/rzp/'+id , date=date,name=name,time=time)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -2427,6 +2431,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(port=5001,debug=True)
+
 
 
 
