@@ -55,66 +55,66 @@ def send_payment_flow(from_number,name,date,slot,amount,link):
 
     external_url = "https://graph.facebook.com/v22.0/563776386825270/messages"  # Example API URL
 
-    # incoming_data = { 
-    #     "messaging_product": "whatsapp", 
-    #     "to": from_number, "type": "template", 
-    #     "template": { 
-    #         "name": "ulility_pay_now", 
-    #         "language": { 
-    #             "code": "en" 
-    #         },
-    #         "components": [
-    #             {
-    #                 "type": "header",
-    #                 "parameters":  []
-
-    #             },
-    #              {
-    #     "type": "body",
-    #     "parameters": [ {
-    #                 "type": "text",
-    #                 "text": amount
-    #             }
-         
-    #     ]
-    #   }, {
-    #             "type": "button",
-    #             "index": "0",
-    #             "sub_type": "url",
-    #             "parameters": [
-    #                 {
-    #                     "type": "text",
-    #                     "text": link
-    #                 }
-    #             ]}
-
-    #         ]} 
-    #     }
-
     incoming_data = { 
-  "messaging_product": "whatsapp", 
-  "to": from_number, 
-  "type": "template", 
-  "template": { 
-    "name": "ulility_pay_now2", 
-    "language": { "code": "en" },
-    "components": [
-      {
+        "messaging_product": "whatsapp", 
+        "to": from_number, "type": "template", 
+        "template": { 
+            "name": "multi_payment_option", 
+            "language": { 
+                "code": "en" 
+            },
+            "components": [
+                {
+                    "type": "header",
+                    "parameters":  []
+
+                },
+                 {
         "type": "body",
-        "parameters": [
-          {
-            "type": "text",
-            "text": amount 
-          },
-          {
-            "type": "text",
-            "text": "https://rzp.io/rzp/"+link
-          }
+        "parameters": [ {
+                    "type": "text",
+                    "text": amount
+                }
+         
         ]
-      }
-    ]
-  } 
-}
+      }, {
+                "type": "button",
+                "index": "0",
+                "sub_type": "url",
+                "parameters": [
+                    {
+                        "type": "text",
+                        "text": link
+                    }
+                ]}
+
+            ]} 
+        }
+
+#     incoming_data = { 
+#   "messaging_product": "whatsapp", 
+#   "to": from_number, 
+#   "type": "template", 
+#   "template": { 
+#     "name": "ulility_pay_now2", 
+#     "language": { "code": "en" },
+#     "components": [
+#       {
+#         "type": "body",
+#         "parameters": [
+#           {
+#             "type": "text",
+#             "text": amount 
+#           },
+#           {
+#             "type": "text",
+#             "text": "https://rzp.io/rzp/"+link
+#           }
+#         ]
+#       }
+#     ]
+#   } 
+# }
 
     response = requests.post(external_url, json=incoming_data, headers=headers)
     return 'ok', 200
@@ -1628,6 +1628,7 @@ def send_pdf_utility(from_number):
 
     response = requests.post(external_url, json=incoming_data, headers=headers)
     return "OK", 200
+
 
 
 
