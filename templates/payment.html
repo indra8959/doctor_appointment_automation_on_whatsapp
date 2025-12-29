@@ -238,7 +238,7 @@
 
         <!-- Appointment Details - Clean, Minimal Structure -->
         <div class="appointment-details">
-            <div class="detail-item"><span>Doctor:</span> <strong>Dr. Neeraj Bansal</strong></div>
+            <div class="detail-item"><span>Doctor:</span> <strong>{{ name }}</strong></div>
             <div class="detail-item"><span>Date:</span> <strong>{{ date }}</strong></div>
             <div class="detail-item"><span>Time:</span> <strong>{{ time }}</strong></div>
             <div class="detail-item"><span>Type:</span> <strong>OPD Booking Fee</strong></div>
@@ -256,7 +256,7 @@
   class="pay-button"
   onclick="openInRealBrowser('{{ pay_url }}')"
 >
-  <i class="fas fa-lock"></i> Pay Now ₹220.00
+  <i class="fas fa-lock"></i> Pay Now ₹{{ rs }}
 </button>
 
 <script>
