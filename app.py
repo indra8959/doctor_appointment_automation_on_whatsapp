@@ -2418,7 +2418,9 @@ def redirect_razorpay_payment(id):
         date = retrieved_data['date_of_appointment']
         name = retrieved_data['patient_name']
         time = retrieved_data['time_slot']
-        return render_template('payment.html', pay_url='https://rzp.io/rzp/'+id , date=date,name=name,time=time)
+        rs = "220.00"
+        dr = "Dr. Neeraj Bansal"
+        return render_template('payment.html', pay_url='https://rzp.io/rzp/'+id , date=date,name=name,time=time, dr=dr , rs=rs)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -2431,6 +2433,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(port=5001,debug=True)
+
 
 
 
