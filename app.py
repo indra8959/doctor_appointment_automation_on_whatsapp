@@ -2425,6 +2425,19 @@ def redirect_razorpay_payment(id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/redirect_razorpay_payment2/<string:id>", methods=["GET"])
+def redirect_razorpay_payment2(id):
+    try:
+        retrieved_data = appointment.find_one({"razorpay_url": 'https://rzp.io/rzp/'+id})
+        date = retrieved_data['date_of_appointment']
+        name = retrieved_data['patient_name']
+        time = retrieved_data['time_slot']
+        rs = "1.00"
+        dr = "Doctor Demo"
+        return render_template('payment.html', pay_url='https://rzp.io/rzp/'+id , date=date,name=name,time=time, dr=dr , rs=rs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(port=5000,host="0.0.0.0")
@@ -2433,6 +2446,7 @@ if __name__ == "__main__":
 
 # if __name__ == "__main__":
 #     app.run(port=5001,debug=True)
+
 
 
 
