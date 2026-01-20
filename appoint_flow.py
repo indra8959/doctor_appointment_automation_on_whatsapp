@@ -1557,7 +1557,7 @@ def send_selection_enroll(from_number):
     {
         "id": str(app["id"]),
         "title": app["title"],
-        "description": 'S/o '+app["father"],
+        "description": 'father`s name : '+app["father"],
     }
     for app in latest_appointments[-10:]
 ]
@@ -1628,6 +1628,7 @@ def send_pdf_utility(from_number):
 
     response = requests.post(external_url, json=incoming_data, headers=headers)
     return "OK", 200
+
 
 
 
